@@ -301,6 +301,7 @@ if __name__ == "__main__":
             drawShape(shaderProgram, estrella, tr.matmul([tr.translate(-0.1, -0.4, 0.0), transform_estrella]))
             drawShape(shaderProgram, estrella, tr.matmul([tr.translate(-0.2, -0.2, 0.0), transform_estrella]))
             drawShape(shaderProgram, estrella, tr.matmul([tr.translate(-0.6, -0.3, 0.0), transform_estrella]))
+            drawShape(shaderProgram, estrella, tr.matmul([tr.translate(-0.2, -0.5, 0.0), transform_estrella]))
 
             if y0 - t0 <= -3.0:
                 glfw.set_time(0.0)
