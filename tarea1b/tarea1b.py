@@ -28,7 +28,8 @@ def createShip():
     gpuYellowTriangle = es.toGPUShape(bs.createColorTriangle(1, 1, 0))
     gpuRedTriangle = es.toGPUShape(bs.createColorTriangle(1, 0, 0))
 
-    # Cheating a single orange flame
+
+    # Creating a single orange flame
     orangeFlame = sg.SceneGraphNode("orangeFlame")
     orangeFlame.transform = tr.matmul([tr.rotationZ(np.pi), tr.uniformScale(0.1)])
     orangeFlame.childs += [gpuOrangeTriangle]
@@ -59,7 +60,7 @@ def createShip():
     rightWingRightOrangeFlame.childs += [orangeFlame]
 
 
-    # Cheating a single yellow flame
+    # Creating a single yellow flame
     yellowFlame = sg.SceneGraphNode("yellowFlame")
     yellowFlame.transform = tr.matmul([tr.rotationZ(np.pi), tr.uniformScale(0.2)])
     yellowFlame.childs += [gpuYellowTriangle]
@@ -90,22 +91,23 @@ def createShip():
     rightWingRightYellowFlame.childs += [yellowFlame]
 
 
-    # Cheating a single wing
+    # Creating a single wing
     wing = sg.SceneGraphNode("wing")
     wing.transform = tr.matmul([tr.translate(0, 0.3, 0), tr.scale(1.1, 0.7, 1)])
     wing.childs += [gpuGreyTriangle]
 
 
-    # Cheating the upper part
+    # Creating the upper part
     upper = sg.SceneGraphNode("upper")
     upper.transform = tr.matmul([tr.translate(0, 0.7, 0), tr.uniformScale(0.5)])
     upper.childs += [gpuRedTriangle]
 
 
-    # Cheating the chasis of the ship
+    # Creating the chasis of the ship
     chasis = sg.SceneGraphNode("chasis")
     chasis.transform = tr.scale(0.5, 1, 1)
     chasis.childs += [gpuWhiteQuad]
+
 
     ship = sg.SceneGraphNode("ship")
     ship.childs += [backLeftYellowFlame]
@@ -130,6 +132,80 @@ def createShip():
 
     return traslatedShip
 
+
+def createEnemyShip():
+    gpuGreenQuad = es.toGPUShape(bs.createColorQuad(0, 1, 0))
+    gpuGreyQuad = es.toGPUShape(bs.createColorQuad(0.5, 0.5, 0.5))
+    gpuBlueTriangle = es.toGPUShape(bs.createColorTriangle(0, 0, 1))
+    gpuGreyTriangle = es.toGPUShape(bs.createColorTriangle(0.5, 0.5, 0.5))
+    gpuOrangeTriangle = es.toGPUShape(bs.createColorTriangle(1, 112 / 255, 40 / 255))
+    gpuYellowTriangle = es.toGPUShape(bs.createColorTriangle(1, 1, 0))
+    gpuRedTriangle = es.toGPUShape(bs.createColorTriangle(1, 0, 0))
+
+
+    # Creating a single orange flame
+    orangeFlame = sg.SceneGraphNode("orangeFlame")
+    orangeFlame.transform = tr.matmul([tr.rotationZ(np.pi), tr.uniformScale(0.1)])
+    orangeFlame.childs += [gpuOrangeTriangle]
+
+    # Instanciating 2 orange flames, for the back part
+    backLeftOrangeFlame = sg.SceneGraphNode("backLeftOrangeFlame")
+    backLeftOrangeFlame.transform = tr.translate(-0.11, -0.35, 0.0)
+    backLeftOrangeFlame.childs += [orangeFlame]
+
+    backRightOrangeFlame = sg.SceneGraphNode("backRightOrangeFlame")
+    backRightOrangeFlame.transform = tr.translate(0.11, -0.35, 0.0)
+    backRightOrangeFlame.childs += [orangeFlame]
+
+
+    # Creating a single yellow flame
+    yellowFlame = sg.SceneGraphNode("yellowFlame")
+    yellowFlame.transform = tr.matmul([tr.rotationZ(np.pi), tr.uniformScale(0.2)])
+    yellowFlame.childs += [gpuYellowTriangle]
+
+    # Instanciating 2 yellow flames, for the back part
+    backLeftYellowFlame = sg.SceneGraphNode("backLeftYellowFlame")
+    backLeftYellowFlame.transform = tr.translate(-0.11, -0.4, 0.0)
+    backLeftYellowFlame.childs += [yellowFlame]
+
+    backRightYellowFlame = sg.SceneGraphNode("backRightYellowFlame")
+    backRightYellowFlame.transform = tr.translate(0.11, -0.4, 0.0)
+    backRightYellowFlame.childs += [yellowFlame]
+
+
+    # Creating the back part
+    back = sg.SceneGraphNode("wing")
+    back.transform = tr.uniformScale(0.7)
+    back.childs += [gpuGreyTriangle]
+
+
+    # Creating the upper part
+    upper = sg.SceneGraphNode("upper")
+    upper.transform = tr.matmul([tr.translate(0, 0.5, 0), tr.uniformScale(0.5)])
+    upper.childs += [gpuBlueTriangle]
+
+
+    # Creating the chasis of the ship
+    chasis = sg.SceneGraphNode("chasis")
+    chasis.transform = tr.uniformScale(0.5)
+    chasis.childs += [gpuGreenQuad]
+
+
+    enemyShip = sg.SceneGraphNode("enemyShip")
+    enemyShip.childs += [backLeftYellowFlame]
+    enemyShip.childs += [backRightYellowFlame]
+    enemyShip.childs += [backLeftOrangeFlame]
+    enemyShip.childs += [backRightOrangeFlame]
+    enemyShip.childs += [back]
+    enemyShip.childs += [upper]
+    enemyShip.childs += [chasis]
+
+    traslatedEnemyShip = sg.SceneGraphNode("traslatedEnemyShip")
+    traslatedEnemyShip.transform = tr.translate(0, -0.2, 0)
+    traslatedEnemyShip.childs += [enemyShip]
+
+    return traslatedEnemyShip
+
 if __name__ == "__main__":
 
     # Initialize glfw
@@ -139,7 +215,7 @@ if __name__ == "__main__":
     width = 600
     height = 600
 
-    window = glfw.create_window(width, height, "Ship", None, None)
+    window = glfw.create_window(width, height, "Enemy Ship", None, None)
 
     if not window:
         glfw.terminate()
@@ -161,6 +237,7 @@ if __name__ == "__main__":
 
     # Creating shapes on GPU memory
     ship = createShip()
+    enemyShip = createEnemyShip()
 
     # Our shapes here are always fully painted
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
@@ -173,7 +250,7 @@ if __name__ == "__main__":
         glClear(GL_COLOR_BUFFER_BIT)
 
         # Drawing the Ship
-        sg.drawSceneGraphNode(ship, pipeline, "transform")
+        sg.drawSceneGraphNode(enemyShip, pipeline, "transform")
 
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)
