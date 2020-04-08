@@ -4,7 +4,7 @@
 Daniel Calderon, CC3501, 2019-2
 vertices and indices for simple shapes
 """
-
+import numpy as np
 
 # A simple class container to store vertices and indices that define a shape
 class Shape:
@@ -13,7 +13,7 @@ class Shape:
         self.indices = indices
         self.textureFileName = textureFileName
 
-def opacidad(cf, cb = [0, 0, 0], alpha):
+def opacidad(alpha, cf, cb = [0, 0, 0]):
     return alpha * np.array(cf) + (1 - alpha) * np.array(cb)
 
 def createAxis(length=1.0):
@@ -108,19 +108,19 @@ def createColorTriangle(r, g, b):
 
     return Shape(vertices, indices)
 
-def createFigure(N, color, alpha = 1):
-    color_nuevo = opacidad(color, alpha)
+def createColorCircle(N, color, alpha = 1):
+    color_nuevo = opacidad(alpha, color)
     dphi = (2*np.pi)/N
 
     # Defining locations and colors for each vertex of the shape
     vertices = np.zeros(N*6, dtype = np.float32)
     l = 0; m = 0
-    for i in range(len(vertexData)):
+    for i in range(len(vertices)):
         if i % 6 == 0:
-            vertices[i] = R*np.cos(np.pi/N + l*dphi)
+            vertices[i] = np.cos(np.pi/N + l*dphi)
             l += 1
         elif i % 6 == 1:
-            vertices[i] = R*np.sin(np.pi/N + m*dphi)
+            vertices[i] = np.sin(np.pi/N + m*dphi)
             m += 1
         elif i % 6 == 2:
             vertices[i] = 0.0
