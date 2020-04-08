@@ -12,6 +12,9 @@ class Shape:
         self.indices = indices
         self.textureFileName = textureFileName
 
+# Define la opacidad del color con respecto al del fondo
+def opacidad(cf, cb = [0, 0, 0], alpha):
+    return alpha * np.array(cf) + (1 - alpha) * np.array(cb)
 
 def createAxis(length=1.0):
 
@@ -102,6 +105,47 @@ def createColorTriangle(r, g, b):
     # Defining connections among vertices
     # We have a triangle every 3 indices specified
     indices = [0, 1, 2]
+
+    return Shape(vertices, indices)
+
+# Para N grande, crea un círculo de cierto color
+def createColorCircle(N, color, alpha = 1):
+    color_nuevo = opacidad(color, alpha)
+    dphi = (2*np.pi)/N
+    # Here the new shape will be stored
+    gpuShape = GPUShape()
+
+    # Defining locations and colors for each vertex of the shape
+
+    vertexData = np.zeros(N*6, dtype = np.float32)
+    l = 0; m = 0
+    for i in range(len(vertexData)):
+        if i % 6 == 0:
+            vertexData[i] = np.cos(np.pi/N + l*dphi)
+            l += 1
+        elif i % 6 == 1:
+            vertexData[i] = np.sin(np.pi/N + m*dphi)
+            m += 1
+        elif i % 6 == 2:
+            vertexData[i] = 0.0
+        elif i % 6 == 3:
+            vertexData[i] = color_nuevo[0]
+        elif i % 6 == 4:
+            vertexData[i] = color_nuevo[1]
+        elif i % 6 == 5:
+            vertexData[i] = color_nuevo[2]
+
+    # Defining connections among vertices
+    # We have a triangle every 3 indices specified
+    indices = np.zeros((N - 2)*3, dtype = np.uint32)
+    n = 1; k = 2
+    for i in range(len(indices)):
+        if i % 3 == 1:
+            indices[i] = n
+            n += 1
+        elif i % 3 == 2:
+            indices[i] = k
+            k += 1
 
     return Shape(vertices, indices)
 
