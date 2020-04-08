@@ -108,7 +108,7 @@ def createColorTriangle(r, g, b):
 
     return Shape(vertices, indices)
 
-def createFigure(R, N, color, alpha = 1):
+def createFigure(N, color, alpha = 1):
     color_nuevo = opacidad(color, alpha)
     dphi = (2*np.pi)/N
 
