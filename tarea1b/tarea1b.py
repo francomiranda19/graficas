@@ -10,12 +10,47 @@ import basic_shapes as bs
 import scene_graph as sg
 import easy_shaders as es
 
+class Controller:
+    x = 0.0
+    y = 0.0
+    shoot = False
+
+# we will use the global controller as communication with the callback function
+controller = Controller()
+
+
 def on_key(window, key, scancode, action, mods):
+    global controller
+
+    # Keep pressed buttons
+    if action == glfw.REPEAT or action == glfw.PRESS:
+        if key == glfw.KEY_A:
+            if controller.x <= -0.9:
+                return
+            controller.x -= 0.1
+
+        elif key == glfw.KEY_D:
+            if controller.x >= 0.9:
+                return
+            controller.x += 0.1
+
+        elif key == glfw.KEY_W:
+            if controller.y >= 0.5:
+                return
+            controller.y += 0.1
+
+        elif key == glfw.KEY_S:
+            if controller.y <= 0.1:
+                return
+            controller.y -= 0.1
 
     if action != glfw.PRESS:
         return
 
-    if key == glfw.KEY_ESCAPE:
+    if key == glfw.KEY_SPACE:
+        controller.shoot = not controller.shoot
+
+    elif key == glfw.KEY_ESCAPE:
         sys.exit()
 
     else:
@@ -228,7 +263,8 @@ def createBackground():
     redPlanets = [redPlanet1, redPlanet2, redPlanet3, redPlanet4, redPlanet5]
 
     for i in range(len(redPlanets)):
-        redPlanets[i].transform = tr.translate(random.uniform(-1, 1), random.uniform(-1, 1), 0)
+        x0 = random.uniform(-1, 1); y0 = random.uniform(-1, 2)
+        redPlanets[i].transform = tr.translate(x0, y0, 0)
         redPlanets[i].childs += [redPlanet]
     
 
@@ -248,7 +284,8 @@ def createBackground():
     greenPlanets = [greenPlanet1, greenPlanet2, greenPlanet3, greenPlanet4, greenPlanet5]
 
     for i in range(len(greenPlanets)):
-        greenPlanets[i].transform = tr.translate(random.uniform(-1, 1), random.uniform(-1, 2), 0)
+        x0 = random.uniform(-1, 1); y0 = random.uniform(-1, 2)
+        greenPlanets[i].transform = tr.translate(x0, y0, 0)
         greenPlanets[i].childs += [greenPlanet]
     
 
@@ -267,7 +304,8 @@ def createBackground():
     bluePlanets = [bluePlanet1, bluePlanet2, bluePlanet3, bluePlanet4, bluePlanet5]
 
     for i in range(len(bluePlanets)):
-        bluePlanets[i].transform = tr.translate(random.uniform(-1, 1), random.uniform(-1, 2), 0)
+        x0 = random.uniform(-1, 1); y0 = random.uniform(-1, 2)
+        bluePlanets[i].transform = tr.translate(x0, y0, 0)
         bluePlanets[i].childs += [bluePlanet]
     
 
@@ -277,23 +315,24 @@ def createBackground():
     star.childs += [gpuStar]
     
     # Positioning the stars
-    star1 = sg.SceneGraphNode("star1"); star11 = sg.SceneGraphNode("star1")
-    star2 = sg.SceneGraphNode("star2"); star12 = sg.SceneGraphNode("star1")
-    star3 = sg.SceneGraphNode("star3"); star13 = sg.SceneGraphNode("star1")
-    star4 = sg.SceneGraphNode("star4"); star14 = sg.SceneGraphNode("star1")
-    star5 = sg.SceneGraphNode("star5"); star15 = sg.SceneGraphNode("star1")
-    star6 = sg.SceneGraphNode("star6"); star16 = sg.SceneGraphNode("star1")
-    star7 = sg.SceneGraphNode("star7"); star17 = sg.SceneGraphNode("star1")
-    star8 = sg.SceneGraphNode("star8"); star18 = sg.SceneGraphNode("star1")
-    star9 = sg.SceneGraphNode("star9"); star19 = sg.SceneGraphNode("star1")
+    star1 = sg.SceneGraphNode("star1"); star11 = sg.SceneGraphNode("star11")
+    star2 = sg.SceneGraphNode("star2"); star12 = sg.SceneGraphNode("star12")
+    star3 = sg.SceneGraphNode("star3"); star13 = sg.SceneGraphNode("star13")
+    star4 = sg.SceneGraphNode("star4"); star14 = sg.SceneGraphNode("star14")
+    star5 = sg.SceneGraphNode("star5"); star15 = sg.SceneGraphNode("star15")
+    star6 = sg.SceneGraphNode("star6"); star16 = sg.SceneGraphNode("star16")
+    star7 = sg.SceneGraphNode("star7"); star17 = sg.SceneGraphNode("star17")
+    star8 = sg.SceneGraphNode("star8"); star18 = sg.SceneGraphNode("star18")
+    star9 = sg.SceneGraphNode("star9"); star19 = sg.SceneGraphNode("star19")
     star10 = sg.SceneGraphNode("star10"); star20 = sg.SceneGraphNode("star20")
     stars = [star1, star2, star3, star4, star5, star6, star7, star8, star9, star10,
              star11, star12, star13, star14, star15, star16, star17, star18, star19, star20]
 
     for i in range(len(stars)):
-        stars[i].transform = tr.translate(random.uniform(-1, 1), random.uniform(-1, 2), 0)
+        x0 = random.uniform(-1, 1); y0 = random.uniform(-1, 2)
+        stars[i].transform = tr.translate(x0, y0, 0)
         stars[i].childs += [star]
-    
+
     
     background = sg.SceneGraphNode("background")
     background.childs += redPlanets
@@ -315,6 +354,7 @@ def createShot():
     shots.childs += [shot]
 
     return shots
+
 
 if __name__ == "__main__":
 
@@ -354,17 +394,29 @@ if __name__ == "__main__":
     # Our shapes here are always fully painted
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
+    t0 = glfw.get_time()
+
     while not glfw.window_should_close(window):
+        # Getting the time difference from the previous iteration
+        t1 = glfw.get_time()
+        dt = t1 - t0
+        t0 = t1
+
         # Using GLFW to check for input events
         glfw.poll_events()
 
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT)
 
-        # Drawing the Ship
+        # Drawing the scene
+        background.transform = tr.translate(0, -t0/2, 0)
         sg.drawSceneGraphNode(background, pipeline, "transform")
+
+        ship.transform = tr.matmul([tr.translate(controller.x, controller.y, 0), tr.translate(0, -0.8, 0), tr.uniformScale(0.2)])
+        enemyShip.transform = tr.matmul([tr.translate(np.cos(t0), 0.85, 0), tr.rotationZ(np.pi), tr.uniformScale(0.2)])
+
         #sg.drawSceneGraphNode(shot, pipeline, "transform")
-        #sg.drawSceneGraphNode(enemyShip, pipeline, "transform")
+        sg.drawSceneGraphNode(enemyShip, pipeline, "transform")
         sg.drawSceneGraphNode(ship, pipeline, "transform")
 
         # Once the render is done, buffers are swapped, showing only the complete scene.
