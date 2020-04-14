@@ -16,11 +16,15 @@ import easy_shaders as es
 # Each node represents a group of objects
 # Each leaf represents a basic figure (GPUShape)
 # To identify each node properly, it MUST have a unique name
+
+# La clase está modificada para adaptarla espeíficamente a los planetas
 class SceneGraphNode:
     def __init__(self, name):
         self.name = name
         self.transform = tr.identity()
         self.childs = []
+        self.pos_x = 0
+        self.pos_y = 0
 
     
 def findNode(node, name):
