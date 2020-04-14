@@ -13,11 +13,9 @@ import easy_shaders as es
 class Controller:
     x = 0.0
     y = 0.0
-    shoot = False
 
 # we will use the global controller as communication with the callback function
 controller = Controller()
-
 
 def on_key(window, key, scancode, action, mods):
     global controller
@@ -46,9 +44,6 @@ def on_key(window, key, scancode, action, mods):
 
     if action != glfw.PRESS:
         return
-
-    if key == glfw.KEY_SPACE:
-        controller.shoot = not controller.shoot
 
     elif key == glfw.KEY_ESCAPE:
         sys.exit()
@@ -161,11 +156,13 @@ def createShip():
     ship.childs += [upper]
     ship.childs += [chasis]
 
-    traslatedShip = sg.SceneGraphNode("traslatedShip")
-    traslatedShip.transform = tr.translate(0, -0.2, 0)
-    traslatedShip.childs += [ship]
+    translatedShip = sg.SceneGraphNode("translatedShip")
+    translatedShip.transform = tr.translate(0, -0.2, 0)
+    translatedShip.childs += [ship]
+    translatedShip.pos_x = controller.x
+    translatedShip.pos_y = controller.y
 
-    return traslatedShip
+    return translatedShip
 
 
 def createEnemyShip():
@@ -235,112 +232,89 @@ def createEnemyShip():
     enemyShip.childs += [upper]
     enemyShip.childs += [chasis]
 
-    traslatedEnemyShip = sg.SceneGraphNode("traslatedEnemyShip")
-    traslatedEnemyShip.transform = tr.translate(0, -0.2, 0)
-    traslatedEnemyShip.childs += [enemyShip]
+    translatedEnemyShip = sg.SceneGraphNode("translatedEnemyShip")
+    translatedEnemyShip.transform = tr.translate(0, -0.2, 0)
+    translatedEnemyShip.childs += [enemyShip]
+    translatedEnemyShip.pos_x = controller.x
+    translatedEnemyShip.pos_y = controller.y
 
-    return traslatedEnemyShip
+    return translatedEnemyShip
 
-def createBackground():
+def createRedPlanet():
+    x0 = random.uniform(-1, 1); y0 = random.uniform(-1, 2)
     gpuRedPlanet = es.toGPUShape(bs.createColorCircle(60, [1, 0, 0], 0.4))
-    gpuGreenPlanet = es.toGPUShape(bs.createColorCircle(60, [0, 1, 0], 0.4))
-    gpuBluePlanet = es.toGPUShape(bs.createColorCircle(60, [0, 0, 1], 0.4))
-    gpuStar = es.toGPUShape(bs.createColorCircle(60, [1, 1, 1]))
 
-
-    # Creating a single red planet
     redPlanet = sg.SceneGraphNode("redPlanet")
     redPlanet.transform = tr.uniformScale(0.05)
     redPlanet.childs += [gpuRedPlanet]
 
-    # Positioning the red planets
     redPlanet1 = sg.SceneGraphNode("redPlanet1")
-    redPlanet2 = sg.SceneGraphNode("redPlanet2")
-    redPlanet3 = sg.SceneGraphNode("redPlanet3")
-    redPlanet4 = sg.SceneGraphNode("redPlanet4")
-    redPlanet5 = sg.SceneGraphNode("redPlanet5")
+    redPlanet1.transform = tr.translate(x0, y0, 0)
+    redPlanet1.childs += [redPlanet]
 
-    redPlanets = [redPlanet1, redPlanet2, redPlanet3, redPlanet4, redPlanet5]
+    redPlanets = sg.SceneGraphNode("redPlanets")
+    redPlanets.childs += [redPlanet1]
+    redPlanets.pos_x = x0
+    redPlanets.pos_y = y0
 
-    for i in range(len(redPlanets)):
-        x0 = random.uniform(-1, 1); y0 = random.uniform(-1, 2)
-        redPlanets[i].transform = tr.translate(x0, y0, 0)
-        redPlanets[i].childs += [redPlanet]
-    
+    return redPlanets
 
-    # Creating a single green planet
+def createGreenPlanet():
+    x0 = random.uniform(-1, 1); y0 = random.uniform(-1, 2)
+    gpuGreenPlanet = es.toGPUShape(bs.createColorCircle(60, [0, 1, 0], 0.4))
+
     greenPlanet = sg.SceneGraphNode("greenPlanet")
     greenPlanet.transform = tr.uniformScale(0.05)
     greenPlanet.childs += [gpuGreenPlanet]
 
-    # Positioning the green planets
     greenPlanet1 = sg.SceneGraphNode("greenPlanet1")
-    greenPlanet2 = sg.SceneGraphNode("greenPlanet2")
-    greenPlanet3 = sg.SceneGraphNode("greenPlanet3")
-    greenPlanet4 = sg.SceneGraphNode("greenPlanet4")
-    greenPlanet5 = sg.SceneGraphNode("greenPlanet5")
+    greenPlanet1.transform = tr.translate(x0, y0, 0)
+    greenPlanet1.childs += [greenPlanet]
 
+    greenPlanets = sg.SceneGraphNode("greenPlanets")
+    greenPlanets.childs += [greenPlanet1]
+    greenPlanets.pos_x = x0
+    greenPlanets.pos_y = y0
 
-    greenPlanets = [greenPlanet1, greenPlanet2, greenPlanet3, greenPlanet4, greenPlanet5]
+    return greenPlanets
 
-    for i in range(len(greenPlanets)):
-        x0 = random.uniform(-1, 1); y0 = random.uniform(-1, 2)
-        greenPlanets[i].transform = tr.translate(x0, y0, 0)
-        greenPlanets[i].childs += [greenPlanet]
-    
+def createBluePlanet():
+    x0 = random.uniform(-1, 1); y0 = random.uniform(-1, 2)
+    gpuBluePlanet = es.toGPUShape(bs.createColorCircle(60, [0, 0, 1], 0.4))
 
-    # Creating a single blue planet
     bluePlanet = sg.SceneGraphNode("bluePlanet")
     bluePlanet.transform = tr.uniformScale(0.05)
     bluePlanet.childs += [gpuBluePlanet]
 
-    # Positioning the blue planets
     bluePlanet1 = sg.SceneGraphNode("bluePlanet1")
-    bluePlanet2 = sg.SceneGraphNode("bluePlanet2")
-    bluePlanet3 = sg.SceneGraphNode("bluePlanet3")
-    bluePlanet4 = sg.SceneGraphNode("bluePlanet4")
-    bluePlanet5 = sg.SceneGraphNode("bluePlanet5")
+    bluePlanet1.transform = tr.translate(x0, y0, 0)
+    bluePlanet1.childs += [bluePlanet]
 
-    bluePlanets = [bluePlanet1, bluePlanet2, bluePlanet3, bluePlanet4, bluePlanet5]
+    bluePlanets = sg.SceneGraphNode("bluePlanets")
+    bluePlanets.childs += [bluePlanet1]
+    bluePlanets.pos_x = x0
+    bluePlanets.pos_y = y0
 
-    for i in range(len(bluePlanets)):
-        x0 = random.uniform(-1, 1); y0 = random.uniform(-1, 2)
-        bluePlanets[i].transform = tr.translate(x0, y0, 0)
-        bluePlanets[i].childs += [bluePlanet]
-    
+    return bluePlanets
 
-    # Creating a single star
+def createStar():
+    x0 = random.uniform(-1, 1); y0 = random.uniform(-1, 2)
+    gpuStar = es.toGPUShape(bs.createColorCircle(60, [1, 1, 1]))
+
     star = sg.SceneGraphNode("star")
     star.transform = tr.uniformScale(0.01)
     star.childs += [gpuStar]
-    
-    # Positioning the stars
-    star1 = sg.SceneGraphNode("star1"); star11 = sg.SceneGraphNode("star11")
-    star2 = sg.SceneGraphNode("star2"); star12 = sg.SceneGraphNode("star12")
-    star3 = sg.SceneGraphNode("star3"); star13 = sg.SceneGraphNode("star13")
-    star4 = sg.SceneGraphNode("star4"); star14 = sg.SceneGraphNode("star14")
-    star5 = sg.SceneGraphNode("star5"); star15 = sg.SceneGraphNode("star15")
-    star6 = sg.SceneGraphNode("star6"); star16 = sg.SceneGraphNode("star16")
-    star7 = sg.SceneGraphNode("star7"); star17 = sg.SceneGraphNode("star17")
-    star8 = sg.SceneGraphNode("star8"); star18 = sg.SceneGraphNode("star18")
-    star9 = sg.SceneGraphNode("star9"); star19 = sg.SceneGraphNode("star19")
-    star10 = sg.SceneGraphNode("star10"); star20 = sg.SceneGraphNode("star20")
-    stars = [star1, star2, star3, star4, star5, star6, star7, star8, star9, star10,
-             star11, star12, star13, star14, star15, star16, star17, star18, star19, star20]
 
-    for i in range(len(stars)):
-        x0 = random.uniform(-1, 1); y0 = random.uniform(-1, 2)
-        stars[i].transform = tr.translate(x0, y0, 0)
-        stars[i].childs += [star]
+    star1 = sg.SceneGraphNode("star1")
+    star1.transform = tr.translate(x0, y0, 0)
+    star1.childs += [star]
 
-    
-    background = sg.SceneGraphNode("background")
-    background.childs += redPlanets
-    background.childs += greenPlanets
-    background.childs += bluePlanets
-    background.childs += stars
+    stars = sg.SceneGraphNode("stars")
+    stars.childs += [star1]
+    stars.pos_x = x0
+    stars.pos_y = y0
 
-    return background
+    return stars
 
 def createShot():
     gpuWhiteQuad = es.toGPUShape(bs.createColorQuad(1, 1, 1))
@@ -352,6 +326,8 @@ def createShot():
 
     shots = sg.SceneGraphNode("shots")
     shots.childs += [shot]
+    shots.pos_x = controller.x
+    shot.pos_y = controller.y
 
     return shots
 
@@ -388,8 +364,31 @@ if __name__ == "__main__":
     # Creating shapes on GPU memory
     ship = createShip()
     enemyShip = createEnemyShip()
-    background = createBackground()
     shot = createShot()
+
+    redPlanet1 = createRedPlanet(); greenPlanet1 = createGreenPlanet(); bluePlanet1 = createBluePlanet()
+    redPlanet2 = createRedPlanet(); greenPlanet2 = createGreenPlanet(); bluePlanet2 = createBluePlanet()
+    redPlanet3 = createRedPlanet(); greenPlanet3 = createGreenPlanet(); bluePlanet3 = createBluePlanet()
+    redPlanet4 = createRedPlanet(); greenPlanet4 = createGreenPlanet(); bluePlanet4 = createBluePlanet()
+    redPlanet5 = createRedPlanet(); greenPlanet5 = createGreenPlanet(); bluePlanet5 = createBluePlanet()
+    redPlanet6 = createRedPlanet(); greenPlanet6 = createGreenPlanet(); bluePlanet6 = createBluePlanet()
+
+    star1 = createStar(); star11 = createStar()
+    star2 = createStar(); star12 = createStar()
+    star3 = createStar(); star13 = createStar()
+    star4 = createStar(); star14 = createStar()
+    star5 = createStar(); star15 = createStar()
+    star6 = createStar(); star16 = createStar()
+    star7 = createStar(); star17 = createStar()
+    star8 = createStar(); star18 = createStar()
+    star9 = createStar(); star19 = createStar()
+    star10 = createStar(); star20 = createStar()
+
+    redPlanets = [redPlanet1, redPlanet2, redPlanet3, redPlanet4, redPlanet5, redPlanet6]
+    greenPlanets = [greenPlanet1, greenPlanet2, greenPlanet3, greenPlanet4, greenPlanet5, greenPlanet6]
+    bluePlanets = [bluePlanet1, bluePlanet2, bluePlanet3, bluePlanet4, bluePlanet5, bluePlanet6]
+    stars = [star1, star2, star3, star4, star5, star6, star7, star8, star9, star10,
+             star11, star12, star13, star14, star15, star16, star17, star18, star19, star20]
 
     # Our shapes here are always fully painted
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
@@ -402,6 +401,11 @@ if __name__ == "__main__":
         dt = t1 - t0
         t0 = t1
 
+        if glfw.get_key(window, glfw.KEY_D) == glfw.PRESS or glfw.get_key(window, glfw.KEY_A) == glfw.PRESS:
+            ship.pos_x = controller.x
+        if glfw.get_key(window, glfw.KEY_W) == glfw.PRESS or glfw.get_key(window, glfw.KEY_S) == glfw.PRESS:
+            ship.pos_y = controller.y
+
         # Using GLFW to check for input events
         glfw.poll_events()
 
@@ -409,14 +413,49 @@ if __name__ == "__main__":
         glClear(GL_COLOR_BUFFER_BIT)
 
         # Drawing the scene
-        background.transform = tr.translate(0, -t0/2, 0)
-        sg.drawSceneGraphNode(background, pipeline, "transform")
+        for redPlanet in redPlanets:
+            redPlanet.transform = tr.translate(0, redPlanet.pos_y, 0)
+            if redPlanet.pos_y - dt > -3:
+                redPlanet.pos_y -= dt
+            else:
+                redPlanet.pos_y = 2
+                redPlanet.pos_y -= dt
+
+        for greenPlanet in greenPlanets:
+            greenPlanet.transform = tr.translate(0, greenPlanet.pos_y, 0)
+            if greenPlanet.pos_y - dt > -3:
+                greenPlanet.pos_y -= dt
+            else:
+                greenPlanet.pos_y = 2
+                greenPlanet.pos_y -= dt
+
+        for bluePlanet in bluePlanets:
+            bluePlanet.transform = tr.translate(0, bluePlanet.pos_y, 0)
+            if bluePlanet.pos_y - dt > -3:
+                bluePlanet.pos_y -= dt
+            else:
+                bluePlanet.pos_y = 2
+                bluePlanet.pos_y -= dt
+
+        for star in stars:
+            star.transform = tr.translate(0, star.pos_y, 0)
+            if star.pos_y - dt > -3:
+                star.pos_y -= dt
+            else:
+                star.pos_y = 2
+                star.pos_y -= dt
 
         ship.transform = tr.matmul([tr.translate(controller.x, controller.y, 0), tr.translate(0, -0.8, 0), tr.uniformScale(0.2)])
-        enemyShip.transform = tr.matmul([tr.translate(np.cos(t0), 0.85, 0), tr.rotationZ(np.pi), tr.uniformScale(0.2)])
 
-        #sg.drawSceneGraphNode(shot, pipeline, "transform")
-        sg.drawSceneGraphNode(enemyShip, pipeline, "transform")
+        for redPlanet in redPlanets:
+            sg.drawSceneGraphNode(redPlanet, pipeline, "transform")
+        for greenPlanet in greenPlanets:
+            sg.drawSceneGraphNode(greenPlanet, pipeline, "transform")
+        for bluePlanet in bluePlanets:
+            sg.drawSceneGraphNode(bluePlanet, pipeline, "transform")
+        for star in stars:
+            sg.drawSceneGraphNode(star, pipeline, "transform")
+
         sg.drawSceneGraphNode(ship, pipeline, "transform")
 
         # Once the render is done, buffers are swapped, showing only the complete scene.
