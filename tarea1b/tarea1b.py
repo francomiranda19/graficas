@@ -21,26 +21,26 @@ def on_key(window, key, scancode, action, mods):
     global controller
 
     # Keep pressed buttons
-    if action == glfw.REPEAT or action == glfw.PRESS:
+    if action == glfw.PRESS or action == glfw.REPEAT:
         if key == glfw.KEY_A:
-            if controller.x <= -0.9:
+            if controller.x <= -1.0:
                 return
-            controller.x -= 0.1
+            controller.x -= 0.05
 
         elif key == glfw.KEY_D:
-            if controller.x >= 0.9:
+            if controller.x >= 1.0:
                 return
-            controller.x += 0.1
+            controller.x += 0.05
 
         elif key == glfw.KEY_W:
             if controller.y >= 0.5:
                 return
-            controller.y += 0.1
+            controller.y += 0.05
 
         elif key == glfw.KEY_S:
-            if controller.y <= 0.1:
+            if controller.y <= 0.0:
                 return
-            controller.y -= 0.1
+            controller.y -= 0.05
 
     if action != glfw.PRESS:
         return
@@ -157,7 +157,6 @@ def createShip():
     ship.childs += [chasis]
 
     translatedShip = sg.SceneGraphNode("translatedShip")
-    translatedShip.transform = tr.translate(0, -0.2, 0)
     translatedShip.childs += [ship]
     translatedShip.pos_x = controller.x
     translatedShip.pos_y = controller.y
@@ -327,7 +326,7 @@ def createShot():
     shots = sg.SceneGraphNode("shots")
     shots.childs += [shot]
     shots.pos_x = controller.x
-    shot.pos_y = controller.y
+    shots.pos_y = 2
 
     return shots
 
@@ -341,7 +340,7 @@ if __name__ == "__main__":
     width = 600
     height = 600
 
-    window = glfw.create_window(width, height, "Space Wars", None, None)
+    window = glfw.create_window(width, height, "Space War", None, None)
 
     if not window:
         glfw.terminate()
@@ -403,6 +402,7 @@ if __name__ == "__main__":
 
         if glfw.get_key(window, glfw.KEY_D) == glfw.PRESS or glfw.get_key(window, glfw.KEY_A) == glfw.PRESS:
             ship.pos_x = controller.x
+            shot.pos_x = ship.pos_x
         if glfw.get_key(window, glfw.KEY_W) == glfw.PRESS or glfw.get_key(window, glfw.KEY_S) == glfw.PRESS:
             ship.pos_y = controller.y
 
@@ -445,7 +445,27 @@ if __name__ == "__main__":
                 star.pos_y = 2
                 star.pos_y -= dt
 
-        ship.transform = tr.matmul([tr.translate(controller.x, controller.y, 0), tr.translate(0, -0.8, 0), tr.uniformScale(0.2)])
+
+        if glfw.get_key(window, glfw.KEY_SPACE) == glfw.PRESS:
+            if shot.pos_y <= 2:
+                shot.transform = tr.matmul(
+                    [tr.translate(ship.pos_x, shot.pos_y, 0), tr.translate(0, -0.8, 0), tr.uniformScale(0.2)])
+                shot.pos_y += 5*dt
+            else:
+                shot.pos_y = ship.pos_y
+        else:
+            if shot.pos_y > 2:
+                shot.transform = tr.translate(0, 2, 0)
+            else:
+                shot.transform = tr.matmul(
+                    [tr.translate(ship.pos_x, shot.pos_y, 0), tr.translate(0, -0.8, 0), tr.uniformScale(0.2)])
+                shot.pos_y += 5*dt
+
+
+        ship.transform = tr.matmul([tr.translate(controller.x, controller.y, 0),
+                                    tr.translate(0, -0.8, 0),
+                                    tr.uniformScale(0.2)])
+
 
         for redPlanet in redPlanets:
             sg.drawSceneGraphNode(redPlanet, pipeline, "transform")
@@ -456,6 +476,7 @@ if __name__ == "__main__":
         for star in stars:
             sg.drawSceneGraphNode(star, pipeline, "transform")
 
+        sg.drawSceneGraphNode(shot, pipeline, "transform")
         sg.drawSceneGraphNode(ship, pipeline, "transform")
 
         # Once the render is done, buffers are swapped, showing only the complete scene.
