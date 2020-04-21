@@ -13,6 +13,7 @@ import easy_shaders as es
 class Controller:
     x = 0.0
     y = 0.0
+    shoot = False
 
 # we will use the global controller as communication with the callback function
 controller = Controller()
@@ -27,20 +28,23 @@ def on_key(window, key, scancode, action, mods):
                 return
             controller.x -= 0.05
 
-        elif key == glfw.KEY_D:
+        if key == glfw.KEY_D:
             if controller.x >= 1.0:
                 return
             controller.x += 0.05
 
-        elif key == glfw.KEY_W:
+        if key == glfw.KEY_W:
             if controller.y >= 0.5:
                 return
             controller.y += 0.05
 
-        elif key == glfw.KEY_S:
+        if key == glfw.KEY_S:
             if controller.y <= 0.0:
                 return
             controller.y -= 0.05
+            
+        if key == glfw.KEY_SPACE:
+            controller.shoot = True
 
     if action != glfw.PRESS:
         return
@@ -140,6 +144,7 @@ def createShip():
 
 
     ship = sg.SceneGraphNode("ship")
+    ship.transform = tr.matmul([tr.translate(0, -0.8, 0), tr.uniformScale(0.2)])
     ship.childs += [backLeftYellowFlame]
     ship.childs += [backRightYellowFlame]
     ship.childs += [leftWingLeftYellowFlame]
@@ -166,13 +171,10 @@ def createShip():
 
 def createEnemyShip():
     gpuGreenQuad = es.toGPUShape(bs.createColorQuad(0, 1, 0))
-    gpuGreyQuad = es.toGPUShape(bs.createColorQuad(0.5, 0.5, 0.5))
     gpuBlueTriangle = es.toGPUShape(bs.createColorTriangle(0, 0, 1))
     gpuGreyTriangle = es.toGPUShape(bs.createColorTriangle(0.5, 0.5, 0.5))
     gpuOrangeTriangle = es.toGPUShape(bs.createColorTriangle(1, 112 / 255, 40 / 255))
     gpuYellowTriangle = es.toGPUShape(bs.createColorTriangle(1, 1, 0))
-    gpuRedTriangle = es.toGPUShape(bs.createColorTriangle(1, 0, 0))
-
 
     # Creating a single orange flame
     orangeFlame = sg.SceneGraphNode("orangeFlame")
@@ -223,6 +225,7 @@ def createEnemyShip():
 
 
     enemyShip = sg.SceneGraphNode("enemyShip")
+    enemyShip.transform = tr.matmul([tr.translate(0, 2, 0), tr.rotationZ(np.pi), tr.uniformScale(0.2)])
     enemyShip.childs += [backLeftYellowFlame]
     enemyShip.childs += [backRightYellowFlame]
     enemyShip.childs += [backLeftOrangeFlame]
@@ -232,10 +235,9 @@ def createEnemyShip():
     enemyShip.childs += [chasis]
 
     translatedEnemyShip = sg.SceneGraphNode("translatedEnemyShip")
-    translatedEnemyShip.transform = tr.translate(0, -0.2, 0)
     translatedEnemyShip.childs += [enemyShip]
-    translatedEnemyShip.pos_x = controller.x
-    translatedEnemyShip.pos_y = controller.y
+    translatedEnemyShip.pos_x = 1
+    translatedEnemyShip.pos_y = 2
 
     return translatedEnemyShip
 
@@ -243,6 +245,7 @@ def createRedPlanet():
     x0 = random.uniform(-1, 1); y0 = random.uniform(-1, 2)
     gpuRedPlanet = es.toGPUShape(bs.createColorCircle(60, [1, 0, 0], 0.4))
 
+    # Creating a single red planet
     redPlanet = sg.SceneGraphNode("redPlanet")
     redPlanet.transform = tr.uniformScale(0.05)
     redPlanet.childs += [gpuRedPlanet]
@@ -262,6 +265,7 @@ def createGreenPlanet():
     x0 = random.uniform(-1, 1); y0 = random.uniform(-1, 2)
     gpuGreenPlanet = es.toGPUShape(bs.createColorCircle(60, [0, 1, 0], 0.4))
 
+    # Creating a single green planet
     greenPlanet = sg.SceneGraphNode("greenPlanet")
     greenPlanet.transform = tr.uniformScale(0.05)
     greenPlanet.childs += [gpuGreenPlanet]
@@ -281,6 +285,7 @@ def createBluePlanet():
     x0 = random.uniform(-1, 1); y0 = random.uniform(-1, 2)
     gpuBluePlanet = es.toGPUShape(bs.createColorCircle(60, [0, 0, 1], 0.4))
 
+    # Creating a single blue planet
     bluePlanet = sg.SceneGraphNode("bluePlanet")
     bluePlanet.transform = tr.uniformScale(0.05)
     bluePlanet.childs += [gpuBluePlanet]
@@ -300,6 +305,7 @@ def createStar():
     x0 = random.uniform(-1, 1); y0 = random.uniform(-1, 2)
     gpuStar = es.toGPUShape(bs.createColorCircle(60, [1, 1, 1]))
 
+    # Creating a single star
     star = sg.SceneGraphNode("star")
     star.transform = tr.uniformScale(0.01)
     star.childs += [gpuStar]
@@ -320,13 +326,13 @@ def createShot():
 
     # Creating a single shot
     shot = sg.SceneGraphNode("shot")
-    shot.transform = tr.scale(0.1, 0.3, 1)
+    shot.transform = tr.matmul([tr.translate(ship.pos_x, ship.pos_y, 0), tr.scale(0.1, 0.3, 0), tr.uniformScale(0.2)])
     shot.childs += [gpuWhiteQuad]
 
     shots = sg.SceneGraphNode("shots")
     shots.childs += [shot]
-    shots.pos_x = controller.x
-    shots.pos_y = 2
+    shots.pos_x = ship.pos_x
+    shots.pos_y = ship.pos_y
 
     return shots
 
@@ -400,9 +406,9 @@ if __name__ == "__main__":
         dt = t1 - t0
         t0 = t1
 
+        # If the buttons for the movement of the ship are pressed, the position of the ship updates
         if glfw.get_key(window, glfw.KEY_D) == glfw.PRESS or glfw.get_key(window, glfw.KEY_A) == glfw.PRESS:
             ship.pos_x = controller.x
-            shot.pos_x = ship.pos_x
         if glfw.get_key(window, glfw.KEY_W) == glfw.PRESS or glfw.get_key(window, glfw.KEY_S) == glfw.PRESS:
             ship.pos_y = controller.y
 
@@ -412,71 +418,77 @@ if __name__ == "__main__":
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT)
 
-        # Drawing the scene
+        # Drawing the scene for the planets and the stars
         for redPlanet in redPlanets:
             redPlanet.transform = tr.translate(0, redPlanet.pos_y, 0)
-            if redPlanet.pos_y - dt > -3:
+            if redPlanet.pos_y > -3:
                 redPlanet.pos_y -= dt
             else:
                 redPlanet.pos_y = 2
                 redPlanet.pos_y -= dt
+            sg.drawSceneGraphNode(redPlanet, pipeline, "transform")
 
         for greenPlanet in greenPlanets:
             greenPlanet.transform = tr.translate(0, greenPlanet.pos_y, 0)
-            if greenPlanet.pos_y - dt > -3:
+            if greenPlanet.pos_y > -3:
                 greenPlanet.pos_y -= dt
             else:
                 greenPlanet.pos_y = 2
                 greenPlanet.pos_y -= dt
+            sg.drawSceneGraphNode(greenPlanet, pipeline, "transform")
 
         for bluePlanet in bluePlanets:
             bluePlanet.transform = tr.translate(0, bluePlanet.pos_y, 0)
-            if bluePlanet.pos_y - dt > -3:
+            if bluePlanet.pos_y > -3:
                 bluePlanet.pos_y -= dt
             else:
                 bluePlanet.pos_y = 2
                 bluePlanet.pos_y -= dt
+            sg.drawSceneGraphNode(bluePlanet, pipeline, "transform")
 
         for star in stars:
             star.transform = tr.translate(0, star.pos_y, 0)
-            if star.pos_y - dt > -3:
+            if star.pos_y > -3:
                 star.pos_y -= dt
             else:
                 star.pos_y = 2
                 star.pos_y -= dt
-
-
-        if glfw.get_key(window, glfw.KEY_SPACE) == glfw.PRESS:
-            if shot.pos_y <= 2:
-                shot.transform = tr.matmul(
-                    [tr.translate(ship.pos_x, shot.pos_y, 0), tr.translate(0, -0.8, 0), tr.uniformScale(0.2)])
-                shot.pos_y += 5*dt
-            else:
-                shot.pos_y = ship.pos_y
-        else:
-            if shot.pos_y > 2:
-                shot.transform = tr.translate(0, 2, 0)
-            else:
-                shot.transform = tr.matmul(
-                    [tr.translate(ship.pos_x, shot.pos_y, 0), tr.translate(0, -0.8, 0), tr.uniformScale(0.2)])
-                shot.pos_y += 5*dt
-
-
-        ship.transform = tr.matmul([tr.translate(controller.x, controller.y, 0),
-                                    tr.translate(0, -0.8, 0),
-                                    tr.uniformScale(0.2)])
-
-
-        for redPlanet in redPlanets:
-            sg.drawSceneGraphNode(redPlanet, pipeline, "transform")
-        for greenPlanet in greenPlanets:
-            sg.drawSceneGraphNode(greenPlanet, pipeline, "transform")
-        for bluePlanet in bluePlanets:
-            sg.drawSceneGraphNode(bluePlanet, pipeline, "transform")
-        for star in stars:
             sg.drawSceneGraphNode(star, pipeline, "transform")
 
-        sg.drawSceneGraphNode(shot, pipeline, "transform")
+        # If space is pressed, the ship shoots
+        if glfw.get_key(window, glfw.KEY_SPACE) == glfw.PRESS or controller.shoot:
+            if shot.pos_y <= 0.8:
+                shot.transform = tr.translate(shot.pos_x, shot.pos_y, 0)
+                shot.pos_y += 3*dt
+                sg.drawSceneGraphNode(shot, pipeline, "transform")
+            else:
+                shot.pos_x = ship.pos_x
+                shot.pos_y = ship.pos_y - 0.85
+                controller.shoot = not controller.shoot
+        else:
+            shot.pos_x = ship.pos_x
+            shot.pos_y = ship.pos_y - 0.85
+            
+        # The ship is always moving as the controller
+        ship.transform = tr.translate(controller.x, controller.y, 0)
+
+        # Counter for the shoots that hit in the enemy ships, if it is equal to N, there are no more respawns
+        tiros = 0
+        if abs(shot.pos_x - sg.findPosition(enemyShip, "enemyShip")[0][0]) < 0.08 \
+                and abs(shot.pos_y - sg.findPosition(enemyShip, "enemyShip")[1][0]) < 0.08:
+            enemyShip.transform = tr.translate(0, 1, 0)
+            enemyShip.pos_y = 1
+            tiros += 1
+        else:
+            if enemyShip.pos_y > -1.2:
+                enemyShip.transform = tr.translate(enemyShip.pos_x, enemyShip.pos_y, 0)
+                enemyShip.pos_x = np.cos(t0)
+                enemyShip.pos_y -= dt
+            else:
+                enemyShip.transform = tr.translate(enemyShip.pos_x, -1.2, 0)
+                enemyShip.pos_x = np.cos(t0)
+            sg.drawSceneGraphNode(enemyShip, pipeline, "transform")
+
         sg.drawSceneGraphNode(ship, pipeline, "transform")
 
         # Once the render is done, buffers are swapped, showing only the complete scene.
