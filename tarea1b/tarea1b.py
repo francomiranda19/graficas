@@ -42,7 +42,7 @@ def on_key(window, key, scancode, action, mods):
             if controller.y <= 0.0:
                 return
             controller.y -= 0.05
-            
+
         if key == glfw.KEY_SPACE:
             controller.shoot = True
 
@@ -336,6 +336,21 @@ def createShot():
 
     return shots
 
+def createEnemyShot():
+    gpuRedQuad = es.toGPUShape(bs.createColorQuad(1, 0, 0))
+
+    # Creating a single enemy shot
+    enemyShot = sg.SceneGraphNode("enemyShot")
+    enemyShot.transform = tr.matmul([tr.translate(enemyShip.pos_x, enemyShip.pos_y, 0), tr.scale(0.1, 0.3, 0), tr.uniformScale(0.2)])
+    enemyShot.childs += [gpuRedQuad]
+
+    enemyShots = sg.SceneGraphNode("enemyShots")
+    enemyShots.childs += [enemyShot]
+    enemyShots.pos_x = enemyShip.pos_x
+    enemyShots.pos_y = enemyShip.pos_y
+
+    return enemyShots
+
 
 if __name__ == "__main__":
 
@@ -370,6 +385,7 @@ if __name__ == "__main__":
     ship = createShip()
     enemyShip = createEnemyShip()
     shot = createShot()
+    enemyShot = createEnemyShot()
 
     redPlanet1 = createRedPlanet(); greenPlanet1 = createGreenPlanet(); bluePlanet1 = createBluePlanet()
     redPlanet2 = createRedPlanet(); greenPlanet2 = createGreenPlanet(); bluePlanet2 = createBluePlanet()
@@ -457,9 +473,9 @@ if __name__ == "__main__":
 
         # If space is pressed, the ship shoots
         if glfw.get_key(window, glfw.KEY_SPACE) == glfw.PRESS or controller.shoot:
-            if shot.pos_y <= 0.8:
+            if shot.pos_y <= 1:
                 shot.transform = tr.translate(shot.pos_x, shot.pos_y, 0)
-                shot.pos_y += 3*dt
+                shot.pos_y += 3 * dt
                 sg.drawSceneGraphNode(shot, pipeline, "transform")
             else:
                 shot.pos_x = ship.pos_x
@@ -468,7 +484,17 @@ if __name__ == "__main__":
         else:
             shot.pos_x = ship.pos_x
             shot.pos_y = ship.pos_y - 0.85
-            
+
+        # When the enemy ship appears, it stars shooting
+        if enemyShot.pos_y > -3 and enemyShot.pos_y < -1.2:
+            enemyShot.transform = tr.translate(enemyShot.pos_x, enemyShot.pos_y, 0)
+            enemyShot.pos_y -= 4 * dt
+            sg.drawSceneGraphNode(enemyShot, pipeline, "transform")
+        elif enemyShot.pos_y <= -2 or enemyShot.pos_y >= -1.2:
+            enemyShot.pos_x = enemyShip.pos_x - 1
+            enemyShot.pos_y = enemyShip.pos_y
+
+
         # The ship is always moving as the controller
         ship.transform = tr.translate(controller.x, controller.y, 0)
 
