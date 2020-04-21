@@ -52,9 +52,6 @@ def on_key(window, key, scancode, action, mods):
     elif key == glfw.KEY_ESCAPE:
         sys.exit()
 
-    else:
-        print('Unknown key')
-
 def createShip():
     gpuWhiteQuad = es.toGPUShape(bs.createColorQuad(1, 1, 1))
     gpuGreyTriangle = es.toGPUShape(bs.createColorTriangle(0.5, 0.5, 0.5))
@@ -416,6 +413,9 @@ if __name__ == "__main__":
 
     t0 = glfw.get_time()
 
+    # Number of times the user ship is hit by the enemy shots
+    tirosAlUsuario = 0
+
     while not glfw.window_should_close(window):
         # Getting the time difference from the previous iteration
         t1 = glfw.get_time()
@@ -479,11 +479,11 @@ if __name__ == "__main__":
                 sg.drawSceneGraphNode(shot, pipeline, "transform")
             else:
                 shot.pos_x = ship.pos_x
-                shot.pos_y = ship.pos_y - 0.85
+                shot.pos_y = ship.pos_y - 0.8
                 controller.shoot = not controller.shoot
         else:
             shot.pos_x = ship.pos_x
-            shot.pos_y = ship.pos_y - 0.85
+            shot.pos_y = ship.pos_y - 0.8
 
         # When the enemy ship appears, it stars shooting
         if enemyShot.pos_y > -3 and enemyShot.pos_y < -1.2:
@@ -494,17 +494,16 @@ if __name__ == "__main__":
             enemyShot.pos_x = enemyShip.pos_x - 1
             enemyShot.pos_y = enemyShip.pos_y
 
-
         # The ship is always moving as the controller
         ship.transform = tr.translate(controller.x, controller.y, 0)
 
         # Counter for the shoots that hit in the enemy ships, if it is equal to N, there are no more respawns
-        tiros = 0
+        tirosAlEnemigo = 0
         if abs(shot.pos_x - sg.findPosition(enemyShip, "enemyShip")[0][0]) < 0.08 \
                 and abs(shot.pos_y - sg.findPosition(enemyShip, "enemyShip")[1][0]) < 0.08:
             enemyShip.transform = tr.translate(0, 1, 0)
             enemyShip.pos_y = 1
-            tiros += 1
+            tirosAlEnemigo += 1
         else:
             if enemyShip.pos_y > -1.2:
                 enemyShip.transform = tr.translate(enemyShip.pos_x, enemyShip.pos_y, 0)
@@ -515,7 +514,15 @@ if __name__ == "__main__":
                 enemyShip.pos_x = np.cos(t0)
             sg.drawSceneGraphNode(enemyShip, pipeline, "transform")
 
-        sg.drawSceneGraphNode(ship, pipeline, "transform")
+        # If the user ship is hit 3 times, it disappears
+        # (The limit is 4 because due to the velocity of the enemy shot, sometimes the hit counts by two when it is
+        # supposed to count by one)
+        if tirosAlUsuario <= 4:
+            if abs(sg.findPosition(enemyShot, "enemyShot")[0][0] - sg.findPosition(ship, "ship")[0][0]) < 0.08 \
+                    and abs(sg.findPosition(enemyShot, "enemyShot")[1][0] - sg.findPosition(ship, "ship")[1][0]) < 0.08:
+                ship.transform = tr.translate(0, -1, 0)
+                tirosAlUsuario += 1
+            sg.drawSceneGraphNode(ship, pipeline, "transform")
 
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)
