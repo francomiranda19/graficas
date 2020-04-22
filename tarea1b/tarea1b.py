@@ -10,7 +10,6 @@ import basic_shapes as bs
 import scene_graph as sg
 import easy_shaders as es
 
-N = int(sys.argv[1])
 
 class Controller:
     x = 0.0
@@ -351,6 +350,9 @@ def createEnemyShot():
     return enemyShots
 
 
+# Number of enemy ships
+N = int(sys.argv[1])
+
 if __name__ == "__main__":
 
     # Initialize glfw
@@ -373,12 +375,13 @@ if __name__ == "__main__":
 
     # Assembling the shader program (pipeline) with both shaders
     pipeline = es.SimpleTransformShaderProgram()
+    pipelineGameOver = es.SimpleTextureTransformShaderProgram()
 
     # Telling OpenGL to use our shader program
     glUseProgram(pipeline.shaderProgram)
 
     # Setting up the clear screen color
-    glClearColor(0.05, 0.05, 0.05, 1.0)
+    glClearColor(0.0, 0.0, 0.0, 1.0)
 
     # Creating shapes on GPU memory
     ship = createShip()
@@ -409,6 +412,9 @@ if __name__ == "__main__":
     bluePlanets = [bluePlanet1, bluePlanet2, bluePlanet3, bluePlanet4, bluePlanet5, bluePlanet6]
     stars = [star1, star2, star3, star4, star5, star6, star7, star8, star9, star10,
              star11, star12, star13, star14, star15, star16, star17, star18, star19, star20]
+
+    gpuGameOver = es.toGPUShape(bs.createTextureQuad("gameover.png"), GL_REPEAT, GL_NEAREST)
+    gpuGameOverTransform = tr.matmul([tr.uniformScale(1.9)])
 
     # Our shapes here are always fully painted
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
@@ -489,6 +495,11 @@ if __name__ == "__main__":
             else:
                 shot.pos_x = ship.pos_x
                 shot.pos_y = ship.pos_y - 0.8
+        else:
+            # Game Over animation
+            glUseProgram(pipelineGameOver.shaderProgram)
+            glUniformMatrix4fv(glGetUniformLocation(pipelineGameOver.shaderProgram, "transform"), 1, GL_TRUE, gpuGameOverTransform)
+            pipelineGameOver.drawShape(gpuGameOver)
 
         # When the enemy ship appears, it stars shooting
         if enemyShot.pos_y > -3 and enemyShot.pos_y < -1.2:
