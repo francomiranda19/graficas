@@ -10,6 +10,8 @@ import basic_shapes as bs
 import scene_graph as sg
 import easy_shaders as es
 
+N = int(sys.argv[1])
+
 class Controller:
     x = 0.0
     y = 0.0
@@ -376,7 +378,7 @@ if __name__ == "__main__":
     glUseProgram(pipeline.shaderProgram)
 
     # Setting up the clear screen color
-    glClearColor(0.0, 0.0, 0.0, 1.0)
+    glClearColor(0.05, 0.05, 0.05, 1.0)
 
     # Creating shapes on GPU memory
     ship = createShip()
@@ -415,6 +417,8 @@ if __name__ == "__main__":
 
     # Number of times the user ship is hit by the enemy shots
     tirosAlUsuario = 0
+    # Number of times the enemy ship is hit by the shots of the user ship
+    tirosAlEnemigo = 0
 
     while not glfw.window_should_close(window):
         # Getting the time difference from the previous iteration
@@ -472,18 +476,19 @@ if __name__ == "__main__":
             sg.drawSceneGraphNode(star, pipeline, "transform")
 
         # If space is pressed, the ship shoots
-        if glfw.get_key(window, glfw.KEY_SPACE) == glfw.PRESS or controller.shoot:
-            if shot.pos_y <= 1:
-                shot.transform = tr.translate(shot.pos_x, shot.pos_y, 0)
-                shot.pos_y += 3 * dt
-                sg.drawSceneGraphNode(shot, pipeline, "transform")
+        if tirosAlUsuario <= 4:
+            if glfw.get_key(window, glfw.KEY_SPACE) == glfw.PRESS or controller.shoot:
+                if shot.pos_y <= 1:
+                    shot.transform = tr.translate(shot.pos_x, shot.pos_y, 0)
+                    shot.pos_y += 3 * dt
+                    sg.drawSceneGraphNode(shot, pipeline, "transform")
+                else:
+                    shot.pos_x = ship.pos_x
+                    shot.pos_y = ship.pos_y - 0.8
+                    controller.shoot = not controller.shoot
             else:
                 shot.pos_x = ship.pos_x
                 shot.pos_y = ship.pos_y - 0.8
-                controller.shoot = not controller.shoot
-        else:
-            shot.pos_x = ship.pos_x
-            shot.pos_y = ship.pos_y - 0.8
 
         # When the enemy ship appears, it stars shooting
         if enemyShot.pos_y > -3 and enemyShot.pos_y < -1.2:
@@ -498,21 +503,22 @@ if __name__ == "__main__":
         ship.transform = tr.translate(controller.x, controller.y, 0)
 
         # Counter for the shoots that hit in the enemy ships, if it is equal to N, there are no more respawns
-        tirosAlEnemigo = 0
-        if abs(shot.pos_x - sg.findPosition(enemyShip, "enemyShip")[0][0]) < 0.08 \
-                and abs(shot.pos_y - sg.findPosition(enemyShip, "enemyShip")[1][0]) < 0.08:
-            enemyShip.transform = tr.translate(0, 1, 0)
-            enemyShip.pos_y = 1
-            tirosAlEnemigo += 1
-        else:
-            if enemyShip.pos_y > -1.2:
-                enemyShip.transform = tr.translate(enemyShip.pos_x, enemyShip.pos_y, 0)
-                enemyShip.pos_x = np.cos(t0)
-                enemyShip.pos_y -= dt
+        if tirosAlEnemigo < N:
+            if abs(shot.pos_x - sg.findPosition(enemyShip, "enemyShip")[0][0]) < 0.08 \
+                    and abs(shot.pos_y - sg.findPosition(enemyShip, "enemyShip")[1][0]) < 0.08:
+                enemyShip.transform = tr.translate(0, 1, 0)
+                enemyShip.pos_y = 1
+                tirosAlEnemigo += 1
             else:
-                enemyShip.transform = tr.translate(enemyShip.pos_x, -1.2, 0)
-                enemyShip.pos_x = np.cos(t0)
-            sg.drawSceneGraphNode(enemyShip, pipeline, "transform")
+                if enemyShip.pos_y > -1.2:
+                    enemyShip.transform = tr.translate(enemyShip.pos_x, enemyShip.pos_y, 0)
+                    enemyShip.pos_x = np.cos(t0)
+                    enemyShip.pos_y -= dt
+                else:
+                    enemyShip.transform = tr.translate(enemyShip.pos_x, -1.2, 0)
+                    enemyShip.pos_x = np.cos(t0)
+                sg.drawSceneGraphNode(enemyShip, pipeline, "transform")
+
 
         # If the user ship is hit 3 times, it disappears
         # (The limit is 4 because due to the velocity of the enemy shot, sometimes the hit counts by two when it is
