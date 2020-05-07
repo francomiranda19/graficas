@@ -11,21 +11,22 @@ import lighting_shaders as ls
 
 # A class to store the application control
 class Controller:
-    showAxis = True
+    def __init__(self):
+        self.mousePos = (0.0, 0.0)
 
 controller = Controller()
 
 def on_key(window, key, scancode, action, mods):
-    global controller  # Declares that we are going to use the global object controller inside this function.
-
-    if action == glfw.REPEAT or action == glfw.PRESS:
-        if key == glfw.KEY_SPACE:
-            controller.showAxis = not controller.showAxis
-
-    elif key == glfw.KEY_ESCAPE:
+    global controller
+    if action == glfw.PRESS:
+        if key == glfw.KEY_ESCAPE:
             sys.exit()
 
-class CreateBird():
+def cursor_pos_callback(window, x, y):
+    global controller
+    controller.mousePos = (x, y)
+
+class Bird():
     def __init__(self):
         self.gpu_body = es.toGPUShape(bs.createColorCube(0.1, 0.1, 0.1))
         self.gpu_upper_wing = es.toGPUShape(bs.createColorCube(0.1, 0.1, 0.1))
@@ -45,28 +46,34 @@ class CreateBird():
         self.upperWing.transform = tr.scale(0.5, 0.5, 0.1)
         self.upperWing.childs += [self.gpu_upper_wing]
 
-        # Creating the upper parts of both wings
-        self.upperLeft = sg.SceneGraphNode("upperLeft")
-        self.upperLeft.transform = tr.matmul([tr.translate(0, -0.5, 0), tr.rotationX(5 * np.pi / 6)])
-        self.upperLeft.childs += [self.upperWing]
-
-        self.upperRight = sg.SceneGraphNode("upperRight")
-        self.upperRight.transform = tr.matmul([tr.translate(0, 0.5, 0), tr.rotationX(np.pi / 6)])
-        self.upperRight.childs += [self.upperWing]
-
         # Creating a single fore wing
         self.foreWing = sg.SceneGraphNode("foreWing")
         self.foreWing.transform = tr.scale(0.5, 0.7, 0.1)
         self.foreWing.childs += [self.gpu_fore_wing]
 
-        # Creating the fore parts of both wings
+        # Creating the left wing of the bird
+        self.upperLeft = sg.SceneGraphNode("upperLeft")
+        self.upperLeft.transform = tr.matmul([tr.translate(0, -0.5, 0), tr.rotationX(5 * np.pi / 6)])
+        self.upperLeft.childs += [self.upperWing]
+
         self.foreLeft = sg.SceneGraphNode("foreLeft")
         self.foreLeft.transform = tr.matmul([tr.translate(0, -1, -0.05), tr.rotationX(7 * np.pi / 6)])
         self.foreLeft.childs += [self.foreWing]
 
+        self.leftWingRotation = sg.SceneGraphNode("leftWingRotation")
+        self.leftWingRotation.childs += [self.upperLeft, self.foreLeft]
+
+        # Creating the right wing of the bird
+        self.upperRight = sg.SceneGraphNode("upperRight")
+        self.upperRight.transform = tr.matmul([tr.translate(0, 0.5, 0), tr.rotationX(np.pi / 6)])
+        self.upperRight.childs += [self.upperWing]
+
         self.foreRight = sg.SceneGraphNode("foreRight")
         self.foreRight.transform = tr.matmul([tr.translate(0, 1, -0.05), tr.rotationX(-np.pi / 6)])
         self.foreRight.childs += [self.foreWing]
+
+        self.rightWingRotation = sg.SceneGraphNode("rightWingRotation")
+        self.rightWingRotation.childs += [self.upperRight, self.foreRight]
 
         # Creating the neck of the bird
         self.neck = sg.SceneGraphNode("neck")
@@ -79,11 +86,17 @@ class CreateBird():
         self.head.transform = tr.matmul([tr.translate(-0.8, 0, 0.5), tr.uniformScale(0.5)])
         self.head.childs += [self.gpu_head]
 
+        self.headAndNeckRotation = sg.SceneGraphNode("headAndNeckRotation")
+        self.headAndNeckRotation.childs += [self.head, self.neck]
+
         # Creating the back wing of the bird
         self.backWing = sg.SceneGraphNode("backWing")
         self.backWing.transform = tr.matmul(
             [tr.translate(0.6, 0, 0.2), tr.rotationY(2.5 * np.pi / 3), tr.scale(0.6, 0.3, 0.3)])
         self.backWing.childs += [self.gpu_back_wing]
+
+        self.backWingRotation = sg.SceneGraphNode("backWingRotation")
+        self.backWingRotation.childs += [self.backWing]
 
         # Creating a single paw
         self.paw = sg.SceneGraphNode("paw")
@@ -102,13 +115,10 @@ class CreateBird():
         # Creating the bird
         self.bird = sg.SceneGraphNode("bird")
         self.bird.childs += [self.body]
-        self.bird.childs += [self.upperLeft]
-        self.bird.childs += [self.upperRight]
-        self.bird.childs += [self.foreLeft]
-        self.bird.childs += [self.foreRight]
-        self.bird.childs += [self.neck]
-        self.bird.childs += [self.head]
-        self.bird.childs += [self.backWing]
+        self.bird.childs += [self.leftWingRotation]
+        self.bird.childs += [self.rightWingRotation]
+        self.bird.childs += [self.headAndNeckRotation]
+        self.bird.childs += [self.backWingRotation]
         self.bird.childs += [self.leftPaw]
         self.bird.childs += [self.rightPaw]
 
@@ -133,14 +143,15 @@ if __name__ == "__main__":
 
     glfw.make_context_current(window)
 
-    # Connecting the callback function 'on_key' to handle keyboard events
+    # Connecting callback functions to handle keyboard and mouse events
     glfw.set_key_callback(window, on_key)
+    glfw.set_cursor_pos_callback(window, cursor_pos_callback)
 
-    # Assembling the shader program (pipeline) with both shaders
-    pipeline = es.SimpleModelViewProjectionShaderProgram()  # Indicamos el shader que utilizaremos
+    # Assembling the shader program (pipeline)
+    pipeline = es.SimpleModelViewProjectionShaderProgram()
 
     # Telling OpenGL to use our shader program
-    glUseProgram(pipeline.shaderProgram)  # INDICAMOS PIPELINE.SHADERPROGRAM
+    glUseProgram(pipeline.shaderProgram)
 
     # Setting up the clear screen color
     glClearColor(1.0, 1.0, 1.0, 1.0)
@@ -153,33 +164,58 @@ if __name__ == "__main__":
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
     gpuAxis = es.toGPUShape(bs.createAxis(7))
-    bird = CreateBird()  ## OJO, LA GPUSHAPE VA ACÁ PORQUE SE TRANSFORMA CONSTANTEMENTE
+    bird = Bird()
     birdNode = bird.get_bird()
 
     # Using the same view and projection matrices in the whole application
     projection = tr.perspective(45, float(width) / float(height), 0.1, 100)
-    glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-
     view = tr.lookAt(
-        np.array([5, 5, 5]),
+        np.array([-5, 0, 0]),
         np.array([0, 0, 0]),
         np.array([0, 0, 1])
     )
+    model = tr.identity()
+
     glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+    glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+    glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, model)
+
+    t0 = glfw.get_time()
 
     while not glfw.window_should_close(window):
+        # Getting the time difference from the previous iteration
+        t1 = glfw.get_time()
+        dt = t1 - t0
+        t0 = t1
+
         # Using GLFW to check for input events
         glfw.poll_events()
 
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        if controller.showAxis:
-            glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
-            pipeline.drawShape(gpuAxis, GL_LINES)
+        # Getting the mouse location in openGL coordinates
+        mousePosX = 2 * (controller.mousePos[0] - width / 2) / width
+        mousePosY = 2 * (height / 2 - controller.mousePos[1]) / height
 
-        # Drawing the Arm
-        sg.drawSceneGraphNode(birdNode, pipeline, "model")  # FIJARSE QUE LO PONEMOS AQUÍ PARA QUE SE ACTUALICE
+        # Getting the nodes that are going to be transformed
+        leftWingRotationNode = sg.findNode(birdNode, "leftWingRotation")
+        rightWingRotationNode = sg.findNode(birdNode, "rightWingRotation")
+        headAndNeckRotationNode = sg.findNode(birdNode, "headAndNeckRotation")
+        backWingRotationNode = sg.findNode(birdNode, "backWingRotation")
+
+        # Nodes transformations
+        if mousePosY > -0.4 and mousePosY < 0.4:
+            leftWingRotationNode.transform = tr.rotationX(-0.5 * mousePosY)
+            rightWingRotationNode.transform = tr.rotationX(0.5 * mousePosY)
+            headAndNeckRotationNode.transform = tr.rotationY(-0.5 * mousePosY)
+            backWingRotationNode.transform = tr.rotationY(0.5 * mousePosY)
+
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+        pipeline.drawShape(gpuAxis, GL_LINES)
+
+        # Drawing the Bird
+        sg.drawSceneGraphNode(birdNode, pipeline, "model")
 
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)
