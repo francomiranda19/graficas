@@ -158,9 +158,6 @@ if __name__ == "__main__":
     # Lighting program
     phongPipeline = ls.SimplePhongShaderProgram()
 
-    # This shader program does not consider lighting
-    mvpPipeline = es.SimpleModelViewProjectionShaderProgram()
-
     # Setting up the clear screen color
     glClearColor(1.0, 1.0, 1.0, 1.0)
 
