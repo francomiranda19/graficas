@@ -10,6 +10,7 @@ import easy_shaders as es
 import transformations as tr
 import lighting_shaders as ls
 from curves import *
+from bird import *
 
 # A class to store the application control
 class Controller:
@@ -62,11 +63,11 @@ if __name__ == "__main__":
     glfw.set_key_callback(window, on_key)
     glfw.set_cursor_pos_callback(window, cursor_pos_callback)
 
+    # Lighting program
+    phongPipeline = ls.SimplePhongShaderProgram()
+
     # Assembling the shader program
     mvpPipeline = es.SimpleModelViewProjectionShaderProgram()
-
-    # Telling openGL to use our shader program
-    glUseProgram(mvpPipeline.shaderProgram)
 
     # Setting up the clear screen color
     glClearColor(1.0, 1.0, 1.0, 1.0)
@@ -79,8 +80,13 @@ if __name__ == "__main__":
 
     # Creating shapes on GPU memory
     gpuAxis = es.toGPUShape(bs.createAxis(7))
+    bird = Bird()
+    birdNode = bird.get_bird()
 
     t0 = glfw.get_time()
+
+    # This determines how the wings rotate
+    rotation = 0
 
     while not glfw.window_should_close(window):
         # Using GLFW to check for input events
@@ -99,13 +105,13 @@ if __name__ == "__main__":
         projection = tr.perspective(45, float(width) / float(height), 0.1, 100)
 
         # Setting up the view transform
-        atX = 3 * np.sin(np.pi * mousePosX)
-        atY = 3 * np.cos(np.pi * mousePosX)
+        atX = 4 * mousePosX
+        atZ = 3 * mousePosY
 
-        atPos = np.array([atX, atY, 3 * mousePosY])
+        atPos = np.array([atX, 0, atZ])
 
         view = tr.lookAt(
-            np.array([1, 1, 1]),
+            np.array([0, 5, 2]),
             atPos,
             np.array([0, 0, 1])
         )
@@ -113,15 +119,71 @@ if __name__ == "__main__":
         # Setting up the model transform
         model = tr.identity()
 
-        glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-        glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
-        glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "model"), 1, GL_TRUE, model)
-
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        # The bird is drawn with lighting effects
+        # Movement of the wings
+        # Right wing
+        upperRightRotationNode = sg.findNode(birdNode, "upperRightRotation")
+        upperRightRotationNode.transform = tr.rotationX(-0.5 * rotation)
+        foreRightRotationNode = sg.findNode(birdNode, "foreRightRotation")
+        foreRightRotationNode.transform = tr.matmul(
+            [tr.translate(0, -0.58, 0), tr.rotationX(-2 * rotation), tr.translate(0, 0.58, 0)])
+
+        # Left wing
+        upperLeftRotationNode = sg.findNode(birdNode, "upperLeftRotation")
+        upperLeftRotationNode.transform = tr.rotationX(0.5 * rotation)
+        foreLeftRotationNode = sg.findNode(birdNode, "foreLeftRotation")
+        foreLeftRotationNode.transform = tr.matmul(
+            [tr.translate(0, 0.58, 0), tr.rotationX(2 * rotation), tr.translate(0, -0.58, 0)])
+
+        # Head and Neck
+        headAndNeckRotationNode = sg.findNode(birdNode, "headAndNeckRotation")
+        headAndNeckRotationNode.transform = tr.rotationY(0.5 * rotation)
+
+        # Back wing
+        backWingRotationNode = sg.findNode(birdNode, "backWingRotation")
+        backWingRotationNode.transform = tr.rotationY(-0.2 * rotation)
+
+        # dty determines the movement of the wings
+        dty = np.sin(5 * t0)
+        if dty > 0:
+            rotation += dt
+        else:
+            rotation -= dt
+
+        glUseProgram(mvpPipeline.shaderProgram)
+        glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+        glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
         mvpPipeline.drawShape(gpuAxis, GL_LINES)
+
+        # The bird is drawn with lighting effects
+        glUseProgram(phongPipeline.shaderProgram)
+
+        # Setting all uniform shader variables
+        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "La"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ld"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
+
+        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
+        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Kd"), 0.9, 0.5, 0.5)
+        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ks"), 0.5, 0.5, 0.5)
+
+        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "lightPosition"), -6, 6, 6)
+        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "viewPosition"), 5, 5, 5)
+        glUniform1ui(glGetUniformLocation(phongPipeline.shaderProgram, "shininess"), 500)
+
+        glUniform1f(glGetUniformLocation(phongPipeline.shaderProgram, "constantAttenuation"), 0.0001)
+        glUniform1f(glGetUniformLocation(phongPipeline.shaderProgram, "linearAttenuation"), 0.03)
+        glUniform1f(glGetUniformLocation(phongPipeline.shaderProgram, "quadraticAttenuation"), 0.01)
+
+        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, model)
+
+        # Drawing the Bird
+        sg.drawSceneGraphNode(birdNode, phongPipeline, "model")
 
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)
