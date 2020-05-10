@@ -1,6 +1,7 @@
 import glfw
 from OpenGL.GL import *
 import numpy as np
+import csv
 import sys
 
 import scene_graph as sg
@@ -8,6 +9,7 @@ import basic_shapes as bs
 import easy_shaders as es
 import transformations as tr
 import lighting_shaders as ls
+from curves import *
 
 # A class to store the application control
 class Controller:
@@ -25,6 +27,19 @@ def on_key(window, key, scancode, action, mods):
 def cursor_pos_callback(window, x, y):
     global controller
     controller.mousePos = (x, y)
+
+def createCurve(filename, N):
+    listaPuntos = []
+    listaCurvas = []
+    with open(filename) as file:
+        reader = csv.reader(file)
+        for line in reader:
+            line = np.array([[float(x) for x in line]]).T
+            listaPuntos.append(line)
+    for i in range(len(listaPuntos) - 3):
+        GMcr = catmullRomMatrix(listaPuntos[i], listaPuntos[i + 1], listaPuntos[i + 2], listaPuntos[i + 3])
+        catmullRomCurve = evalCurve(GMcr, N)
+        listaCurvas.append(catmullRomCurve)
 
 if __name__ == "__main__":
 
