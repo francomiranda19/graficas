@@ -88,6 +88,12 @@ if __name__ == "__main__":
     gpuGrass = es.toGPUShape(bs.createTextureNormalsCube('grass.jpg'), GL_REPEAT, GL_LINEAR)
     gpuSky = es.toGPUShape(bs.createTextureNormalsCube('sky.jpg'), GL_REPEAT, GL_LINEAR)
 
+    leftHills = tr.matmul([tr.translate(25, -25, 0), tr.scale(0.1, 50, 20)])
+    frontHills = tr.matmul([tr.translate(0, -50, 0), tr.rotationZ(np.pi / 2), tr.scale(0.1, 50, 20)])
+    rightHills = tr.matmul([tr.translate(-25, -25, 0), tr.scale(0.1, 50, 20)])
+    grass = tr.matmul([tr.translate(0, -30, -10), tr.scale(50, 65, 0.1)])
+    sky = tr.matmul([tr.translate(0, -30, 10), tr.scale(50, 65, 0.1)])
+
     bird = Bird()
     birdNode = bird.get_bird()
 
@@ -125,7 +131,7 @@ if __name__ == "__main__":
         )
 
         # Setting up the model transform
-        model = tr.rotationX(np.pi)
+        model = tr.identity()
 
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -186,24 +192,19 @@ if __name__ == "__main__":
 
         # Drawing the landscape
         # Hills
-        model1 = tr.matmul([tr.translate(25, -25, 0), tr.scale(0.1, 50, 20)])
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, model1)
+        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, leftHills)
         phongTexturePipeline.drawShape(gpuHills)
-        model2 = tr.matmul([tr.translate(0, -50, 0), tr.rotationZ(np.pi / 2), tr.scale(0.1, 50, 20)])
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, model2)
+        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, frontHills)
         phongTexturePipeline.drawShape(gpuHills)
-        model3 = tr.matmul([tr.translate(-25, -25, 0), tr.scale(0.1, 50, 20)])
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, model3)
+        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, rightHills)
         phongTexturePipeline.drawShape(gpuHills)
 
         # Grass
-        model4 = tr.matmul([tr.translate(0, -30, -10), tr.scale(50, 65, 0.1)])
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, model4)
+        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, grass)
         phongTexturePipeline.drawShape(gpuGrass)
 
         # Sky
-        model5 = tr.matmul([tr.translate(0, -30, 10), tr.scale(50, 65, 0.1)])
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, model5)
+        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, sky)
         phongTexturePipeline.drawShape(gpuSky)
 
         # The bird is drawn with lighting effects
