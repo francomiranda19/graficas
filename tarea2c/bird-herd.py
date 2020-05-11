@@ -41,6 +41,12 @@ def createCurve(filename, N):
         GMcr = catmullRomMatrix(listaPuntos[i], listaPuntos[i + 1], listaPuntos[i + 2], listaPuntos[i + 3])
         catmullRomCurve = evalCurve(GMcr, N)
         listaCurvas.append(catmullRomCurve)
+    curva = []
+    for i in range(len(listaCurvas)):
+        for j in range(len(listaCurvas[i])):
+            curva.append(listaCurvas[i][j])
+
+    return curva
 
 if __name__ == "__main__":
 
@@ -66,8 +72,8 @@ if __name__ == "__main__":
     # Lighting program without textures
     phongPipeline = ls.SimplePhongShaderProgram()
 
-    # Lighting program with textures
-    phongTexturePipeline = ls.SimpleTexturePhongShaderProgram()
+    # Program with textures
+    mvpTexturePipeline = es.SimpleTextureModelViewProjectionShaderProgram()
 
     # Assembling the shader program
     mvpPipeline = es.SimpleModelViewProjectionShaderProgram()
@@ -84,9 +90,9 @@ if __name__ == "__main__":
     # Creating shapes on GPU memory
     gpuAxis = es.toGPUShape(bs.createAxis(7))
     # Landscape
-    gpuHills = es.toGPUShape(bs.createTextureNormalsCube('hills.png'), GL_REPEAT, GL_LINEAR)
-    gpuGrass = es.toGPUShape(bs.createTextureNormalsCube('grass.jpg'), GL_REPEAT, GL_LINEAR)
-    gpuSky = es.toGPUShape(bs.createTextureNormalsCube('sky.jpg'), GL_REPEAT, GL_LINEAR)
+    gpuHills = es.toGPUShape(bs.createTextureCube('hills.png'), GL_REPEAT, GL_LINEAR)
+    gpuGrass = es.toGPUShape(bs.createTextureCube('grass.jpg'), GL_REPEAT, GL_LINEAR)
+    gpuSky = es.toGPUShape(bs.createTextureCube('sky.jpg'), GL_REPEAT, GL_LINEAR)
 
     leftHills = tr.matmul([tr.translate(25, -25, 0), tr.scale(0.1, 50, 20)])
     frontHills = tr.matmul([tr.translate(0, -50, 0), tr.rotationZ(np.pi / 2), tr.scale(0.1, 50, 20)])
@@ -98,6 +104,10 @@ if __name__ == "__main__":
     birdNode = bird.get_bird()
 
     t0 = glfw.get_time()
+
+    # The user determines which path the birds will follow
+    path = sys.argv[1]
+    C = createCurve(path, 500)
 
     # This determines how the wings rotate
     rotation = 0
@@ -169,48 +179,28 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
         mvpPipeline.drawShape(gpuAxis, GL_LINES)
 
-        # The landscape is drawn with texture lighting
-        glUseProgram(phongTexturePipeline.shaderProgram)
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "La"), 1.0, 1.0, 1.0)
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ld"), 1.0, 1.0, 1.0)
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
-
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ka"), 0.8, 0.8, 0.8)
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Kd"), 0.9, 0.9, 0.9)
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ks"), 0.5, 0.5, 0.5)
-
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "lightPosition"), 5, -3, 5)
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "viewPosition"), 0, 5, 2)
-        glUniform1ui(glGetUniformLocation(phongPipeline.shaderProgram, "shininess"), 500)
-
-        glUniform1f(glGetUniformLocation(phongPipeline.shaderProgram, "constantAttenuation"), 0.0001)
-        glUniform1f(glGetUniformLocation(phongPipeline.shaderProgram, "linearAttenuation"), 0.03)
-        glUniform1f(glGetUniformLocation(phongPipeline.shaderProgram, "quadraticAttenuation"), 0.01)
-
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+        # The landscape is drawn with texture program
+        glUseProgram(mvpTexturePipeline.shaderProgram)
+        glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
 
         # Drawing the landscape
         # Hills
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, leftHills)
-        phongTexturePipeline.drawShape(gpuHills)
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, frontHills)
-        phongTexturePipeline.drawShape(gpuHills)
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, rightHills)
-        phongTexturePipeline.drawShape(gpuHills)
-
+        glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, leftHills)
+        mvpTexturePipeline.drawShape(gpuHills)
+        glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, frontHills)
+        mvpTexturePipeline.drawShape(gpuHills)
+        glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, rightHills)
+        mvpTexturePipeline.drawShape(gpuHills)
         # Grass
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, grass)
-        phongTexturePipeline.drawShape(gpuGrass)
-
+        glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, grass)
+        mvpTexturePipeline.drawShape(gpuGrass)
         # Sky
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, sky)
-        phongTexturePipeline.drawShape(gpuSky)
+        glUniformMatrix4fv(glGetUniformLocation(mvpTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, sky)
+        mvpTexturePipeline.drawShape(gpuSky)
 
         # The bird is drawn with lighting effects
         glUseProgram(phongPipeline.shaderProgram)
-
-        # Setting all uniform shader variables
         glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "La"), 1.0, 1.0, 1.0)
         glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ld"), 1.0, 1.0, 1.0)
         glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
@@ -232,6 +222,8 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, model)
 
         # Drawing the Bird
+        for i in range(len(C)):
+            birdNode.transform = tr.translate(C[i][0], C[i][1], C[i][2])
         sg.drawSceneGraphNode(birdNode, phongPipeline, "model")
 
         # Once the render is done, buffers are swapped, showing only the complete scene.
