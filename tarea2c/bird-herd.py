@@ -180,38 +180,38 @@ if __name__ == "__main__":
 
         # The landscape is drawn with texture lighting
         glUseProgram(phongTexturePipeline.shaderProgram)
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "La"), 1.0, 1.0, 1.0)
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ld"), 1.0, 1.0, 1.0)
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "La"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Ld"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
 
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ka"), 0.8, 0.8, 0.8)
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Kd"), 0.9, 0.9, 0.9)
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ks"), 0.5, 0.5, 0.5)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Ka"), 0.8, 0.8, 0.8)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Kd"), 0.9, 0.9, 0.9)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "Ks"), 0.5, 0.5, 0.5)
 
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "lightPosition"), 5, -3, 5)
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "viewPosition"), 0, 5, 2)
-        glUniform1ui(glGetUniformLocation(phongPipeline.shaderProgram, "shininess"), 1000)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "lightPosition"), 5, -3, 5)
+        glUniform3f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "viewPosition"), 0, 5, 2)
+        glUniform1ui(glGetUniformLocation(phongTexturePipeline.shaderProgram, "shininess"), 1000)
 
-        glUniform1f(glGetUniformLocation(phongPipeline.shaderProgram, "constantAttenuation"), 0.0001)
-        glUniform1f(glGetUniformLocation(phongPipeline.shaderProgram, "linearAttenuation"), 0.03)
-        glUniform1f(glGetUniformLocation(phongPipeline.shaderProgram, "quadraticAttenuation"), 0.01)
+        glUniform1f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "constantAttenuation"), 0.0001)
+        glUniform1f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "linearAttenuation"), 0.03)
+        glUniform1f(glGetUniformLocation(phongTexturePipeline.shaderProgram, "quadraticAttenuation"), 0.01)
 
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
+        glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "view"), 1, GL_TRUE, view)
 
         # Drawing the landscape
         # Hills
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, leftHills)
+        glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, leftHills)
         phongTexturePipeline.drawShape(gpuHills)
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, frontHills)
+        glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, frontHills)
         phongTexturePipeline.drawShape(gpuHills)
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, rightHills)
+        glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, rightHills)
         phongTexturePipeline.drawShape(gpuHills)
         # Grass
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, grass)
+        glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, grass)
         phongTexturePipeline.drawShape(gpuGrass)
         # Sky
-        glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, sky)
+        glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, sky)
         phongTexturePipeline.drawShape(gpuSky)
 
         # The bird is drawn with lighting effects
