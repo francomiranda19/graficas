@@ -47,6 +47,14 @@ def createCurve(filename, N):
             curva.append(listaCurvas[i][j])
     return curva
 
+def curvesQuantity(filename):
+    with open(filename) as file:
+        reader = csv.reader(file)
+        i = 0
+        for line in reader:
+            i += 1
+    return i - 3
+
 if __name__ == "__main__":
 
     # Initialize glfw
@@ -74,9 +82,6 @@ if __name__ == "__main__":
     # Lighting program with textures
     phongTexturePipeline = ls.SimpleTexturePhongShaderProgram()
 
-    # Assembling the shader program
-    mvpPipeline = es.SimpleModelViewProjectionShaderProgram()
-
     # Setting up the clear screen color
     glClearColor(1.0, 1.0, 1.0, 1.0)
 
@@ -87,29 +92,39 @@ if __name__ == "__main__":
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
     # Creating shapes on GPU memory
-    gpuAxis = es.toGPUShape(bs.createAxis(7))
     # Landscape
     gpuHills = es.toGPUShape(bs.createTextureNormalsCube('hills.png'), GL_REPEAT, GL_LINEAR)
     gpuGrass = es.toGPUShape(bs.createTextureNormalsCube('grass.jpg'), GL_REPEAT, GL_LINEAR)
     gpuSky = es.toGPUShape(bs.createTextureNormalsCube('sky.jpg'), GL_REPEAT, GL_LINEAR)
+
     # Transformations of the landscape
-    leftHills = tr.matmul([tr.translate(25, -25, 0), tr.scale(0.1, 50, 20)])
-    frontHills = tr.matmul([tr.translate(0, -50, 0), tr.rotationZ(np.pi / 2), tr.scale(0.1, 50, 20)])
-    rightHills = tr.matmul([tr.translate(-25, -25, 0), tr.scale(0.1, 50, 20)])
-    grass = tr.matmul([tr.translate(0, -30, -10), tr.scale(50, 65, 0.1)])
-    sky = tr.matmul([tr.translate(0, -30, 10), tr.scale(50, 65, 0.1)])
+    leftHills = tr.matmul([tr.translate(25, -25, 0), tr.scale(0.1, 100, 20)])
+    frontHills = tr.matmul([tr.translate(0, -50, 0), tr.rotationZ(np.pi / 2), tr.scale(0.1, 100, 20)])
+    rightHills = tr.matmul([tr.translate(-25, -25, 0), tr.scale(0.1, 100, 20)])
+    grass = tr.matmul([tr.translate(0, -30, -10), tr.scale(50, 100, 0.1)])
+    sky = tr.matmul([tr.translate(0, -30, 10), tr.scale(50, 100, 0.1)])
 
+    # Birds
     bird = Bird()
-    birdNode = bird.get_bird()
-
-    t0 = glfw.get_time()
+    birdNode1 = bird.get_bird()
+    birdNode2 = bird.get_bird()
+    birdNode3 = bird.get_bird()
+    birdNode4 = bird.get_bird()
+    birdNode5 = bird.get_bird()
+    birdNodes = [birdNode1, birdNode2, birdNode3, birdNode4, birdNode5]
 
     # The user determines which path the birds will follow
-    path = sys.argv[1]
-    C = createCurve(path, 50)
+    path = sys.argv[1]; N = 100
+    C = createCurve(path, N)
+    c = curvesQuantity(path)
 
     # This determines how the wings rotate
     rotation = 0
+
+    # This is going to be used for the movement of the birds
+    i = 0; j = 0; k = 0; l = 0; m = 0
+
+    t0 = glfw.get_time()
 
     while not glfw.window_should_close(window):
         # Using GLFW to check for input events
@@ -128,8 +143,8 @@ if __name__ == "__main__":
         projection = tr.perspective(45, float(width) / float(height), 0.1, 100)
 
         # Setting up the view transform
-        atX = -4 * mousePosX
-        atZ = 3 * mousePosY
+        atX = -6 * mousePosX
+        atZ = 5 * mousePosY
 
         atPos = np.array([atX, 0, atZ])
 
@@ -144,39 +159,6 @@ if __name__ == "__main__":
 
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
-        # Movement of the wings
-        # Right wing
-        upperRightRotationNode = sg.findNode(birdNode, "upperRightRotation")
-        upperRightRotationNode.transform = tr.rotationX(-0.5 * rotation)
-        foreRightRotationNode = sg.findNode(birdNode, "foreRightRotation")
-        foreRightRotationNode.transform = tr.matmul(
-            [tr.translate(0, -0.58, 0), tr.rotationX(-2 * rotation), tr.translate(0, 0.58, 0)])
-        # Left wing
-        upperLeftRotationNode = sg.findNode(birdNode, "upperLeftRotation")
-        upperLeftRotationNode.transform = tr.rotationX(0.5 * rotation)
-        foreLeftRotationNode = sg.findNode(birdNode, "foreLeftRotation")
-        foreLeftRotationNode.transform = tr.matmul(
-            [tr.translate(0, 0.58, 0), tr.rotationX(2 * rotation), tr.translate(0, -0.58, 0)])
-        # Head and Neck
-        headAndNeckRotationNode = sg.findNode(birdNode, "headAndNeckRotation")
-        headAndNeckRotationNode.transform = tr.rotationY(0.5 * rotation)
-        # Back wing
-        backWingRotationNode = sg.findNode(birdNode, "backWingRotation")
-        backWingRotationNode.transform = tr.rotationY(-0.2 * rotation)
-
-        # dty determines the movement of the wings
-        dty = np.sin(5 * t0)
-        if dty > 0:
-            rotation += dt
-        else:
-            rotation -= dt
-
-        glUseProgram(mvpPipeline.shaderProgram)
-        glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-        glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
-        glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
-        mvpPipeline.drawShape(gpuAxis, GL_LINES)
 
         # The landscape is drawn with texture lighting
         glUseProgram(phongTexturePipeline.shaderProgram)
@@ -214,19 +196,19 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(phongTexturePipeline.shaderProgram, "model"), 1, GL_TRUE, sky)
         phongTexturePipeline.drawShape(gpuSky)
 
-        # The bird is drawn with lighting effects
+        # The birds are drawn with lighting effects
         glUseProgram(phongPipeline.shaderProgram)
         glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "La"), 1.0, 1.0, 1.0)
         glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ld"), 1.0, 1.0, 1.0)
         glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
 
         glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
-        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Kd"), 0.9, 0.5, 0.5)
+        glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Kd"), 0.5, 0.5, 0.5)
         glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "Ks"), 0.5, 0.5, 0.5)
 
         glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "lightPosition"), 5, -3, 5)
         glUniform3f(glGetUniformLocation(phongPipeline.shaderProgram, "viewPosition"), 0, 5, 2)
-        glUniform1ui(glGetUniformLocation(phongPipeline.shaderProgram, "shininess"), 500)
+        glUniform1ui(glGetUniformLocation(phongPipeline.shaderProgram, "shininess"), 1000)
 
         glUniform1f(glGetUniformLocation(phongPipeline.shaderProgram, "constantAttenuation"), 0.0001)
         glUniform1f(glGetUniformLocation(phongPipeline.shaderProgram, "linearAttenuation"), 0.03)
@@ -236,10 +218,101 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "view"), 1, GL_TRUE, view)
         glUniformMatrix4fv(glGetUniformLocation(phongPipeline.shaderProgram, "model"), 1, GL_TRUE, model)
 
-        # Drawing the Bird
-        for i in range(len(C)):
-            birdNode.transform = tr.translate(C[i][0], C[i][1], C[i][2])
-        sg.drawSceneGraphNode(birdNode, phongPipeline, "model")
+        # Movement of the wings
+        for birdNode in birdNodes:
+            # Right wing
+            upperRightRotationNode = sg.findNode(birdNode, "upperRightRotation")
+            upperRightRotationNode.transform = tr.rotationX(-rotation)
+            foreRightRotationNode = sg.findNode(birdNode, "foreRightRotation")
+            foreRightRotationNode.transform = tr.matmul(
+                [tr.translate(0, -0.58, 0), tr.rotationX(-4 * rotation), tr.translate(0, 0.58, 0)])
+            # Left wing
+            upperLeftRotationNode = sg.findNode(birdNode, "upperLeftRotation")
+            upperLeftRotationNode.transform = tr.rotationX(rotation)
+            foreLeftRotationNode = sg.findNode(birdNode, "foreLeftRotation")
+            foreLeftRotationNode.transform = tr.matmul(
+                [tr.translate(0, 0.58, 0), tr.rotationX(4 * rotation), tr.translate(0, -0.58, 0)])
+            # Head and Neck
+            headAndNeckRotationNode = sg.findNode(birdNode, "headAndNeckRotation")
+            headAndNeckRotationNode.transform = tr.rotationY(0.5 * rotation)
+            # Back wing
+            backWingRotationNode = sg.findNode(birdNode, "backWingRotation")
+            backWingRotationNode.transform = tr.rotationY(-0.2 * rotation)
+
+        # dty determines the movement of the wings
+        dty = np.sin(5 * t0)
+        if dty > 0:
+            rotation += dt
+            if dty > 0.99:  # This is for preventing errors
+                rotation = 0
+        else:
+            rotation -= dt
+
+        # Drawing the birds
+        if t0 > 3:
+            if i < N * c - 2:
+                # Calculating the derivative for the rotation of the bird
+                x1 = C[i][0]; y1 = C[i][1]; z1 = C[i][2]
+                derivative1 = (C[i + 2][1] - y1) / (C[i + 2][0] - x1)
+                angle1 = np.arctan(derivative1)
+                # Transformation of the bird
+                birdNode1.transform = tr.matmul([tr.translate(x1, y1, z1), tr.rotationZ(angle1), tr.uniformScale(0.2)])
+                sg.drawSceneGraphNode(birdNode1, phongPipeline, "model")
+                i += 1
+            elif i == N * c - 2:
+                i = 0
+
+        if t0 > 4:
+            if j < N * c - 2:
+                # Calculating the derivative for the rotation of the bird
+                x2 = C[j][0]; y2 = C[j][1]; z2 = C[j][2]
+                derivative2 = (C[j + 2][1] - y2) / (C[j + 2][0] - x2)
+                angle2 = np.arctan(derivative2)
+                # Transformation of the bird
+                birdNode2.transform = tr.matmul([tr.translate(x2, y2, z2), tr.rotationZ(angle2), tr.uniformScale(0.2)])
+                sg.drawSceneGraphNode(birdNode2, phongPipeline, "model")
+                j += 1
+            elif j == N * c - 2:
+                j = 0
+
+        if t0 > 5:
+            if k < N * c - 2:
+                # Calculating the derivative for the rotation of the bird
+                x3 = C[k][0]; y3 = C[k][1]; z3 = C[k][2]
+                derivative3 = (C[k + 2][1] - y3) / (C[k + 2][0] - x3)
+                angle3 = np.arctan(derivative3)
+                # Transformation of the bird
+                birdNode3.transform = tr.matmul([tr.translate(x3, y3, z3), tr.rotationZ(angle3), tr.uniformScale(0.2)])
+                sg.drawSceneGraphNode(birdNode3, phongPipeline, "model")
+                k += 1
+            elif k == N * c - 2:
+                k = 0
+
+        if t0 > 6:
+            if l < N * c - 2:
+                # Calculating the derivative for the rotation of the bird
+                x4 = C[l][0]; y4 = C[l][1]; z4 = C[l][2]
+                derivative4 = (C[l + 2][1] - y4) / (C[l + 2][0] - x4)
+                angle4 = np.arctan(derivative4)
+                # Transformation of the bird
+                birdNode4.transform = tr.matmul([tr.translate(x4, y4, z4), tr.rotationZ(angle4), tr.uniformScale(0.2)])
+                sg.drawSceneGraphNode(birdNode4, phongPipeline, "model")
+                l += 1
+            elif l == N * c - 2:
+                l = 0
+
+        if t0 > 7:
+            if m < N * c - 2:
+                # Calculating the derivative for the rotation of the bird
+                x5 = C[m][0]; y5 = C[m][1]; z5 = C[m][2]
+                derivative5 = (C[m + 2][1] - y5) / (C[m + 2][0] - x5)
+                angle5 = np.arctan(derivative5)
+                # Transformation of the bird
+                birdNode5.transform = tr.matmul([tr.translate(x5, y5, z5), tr.rotationZ(angle5), tr.uniformScale(0.2)])
+                sg.drawSceneGraphNode(birdNode5, phongPipeline, "model")
+                m += 1
+            elif m == N * c - 2:
+                m = 0
 
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)
