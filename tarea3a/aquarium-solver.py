@@ -1,20 +1,31 @@
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as mpl
+import json
+import sys
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
-from scipy import sparse
+import scipy
+import scipy.sparse.linalg
 
-# Problem setup
-H = 4
-W = 3
-L = 6
-h = 0.1
+setup = sys.argv[1]
 
-# Boundary Dirichlet conditions
-AMBIENT_TEMPERATURE = 25
-WINDOW_LOSS = 0.01
-HEATER_A = 5
-HEATER_B = 30
+with open(setup) as file:
+    data = json.load(file)
+    for parameter in data['parameters']:
+        # Problem setup
+        H = parameter['height']
+        W = parameter['width']
+        L = parameter['length']
+        # Boundary conditions
+        WINDOW_LOSS = parameter['window_loss']
+        HEATER_A = parameter['heater_a']
+        HEATER_B = parameter['heater_b']
+        AMBIENT_TEMPERATURE = parameter['ambient_temperature']
+        # Solution
+        FILENAME = parameter['filename']
+
+# Discretization step
+h = 0.15
 
 # Number of unknowns
 nh = int(H // h) - 1
@@ -39,7 +50,7 @@ def getIJK(m):
     return (i, j, k)
 
 # In this matrix we will write all the coefficients of the unknowns
-A = sparse.csc_matrix((N, N))
+A = scipy.sparse.lil_matrix((N, N))
 # In this vector we will write all the right side of the equations
 b = np.zeros((N, ))
 # Note: to write an equation is equivalent to write a row in the matrix system
@@ -89,7 +100,7 @@ for i in range(nw):
                 A[m, m_down] = 1
                 A[m, m_left] = 1
                 A[m, m_right] = 1
-                A[m, m_near] = 1
+                A[m, m_near] = 2
                 A[m, m] = -6
                 b[m] = 0
 
@@ -115,7 +126,7 @@ for i in range(nw):
 
             # Down face
             elif 1 <= i and i <= nw - 2 and j == 0 and 1 <= k and k <= nh - 2:
-                A[m, m_up] = 1
+                A[m, m_up] = 2
                 A[m, m_left] = 1
                 A[m, m_right] = 1
                 A[m, m_near] = 1
@@ -125,7 +136,7 @@ for i in range(nw):
 
             # Up face
             elif 1 <= i and i <= nw - 2 and j == nl - 1 and 1 <= k and k <= nh - 2:
-                A[m, m_down] = 1
+                A[m, m_down] = 2
                 A[m, m_left] = 1
                 A[m, m_right] = 1
                 A[m, m_near] = 1
@@ -137,7 +148,7 @@ for i in range(nw):
             elif i == 0 and 1 <= j and j <= nl - 2 and 1 <= k and k <= nh - 2:
                 A[m, m_up] = 1
                 A[m, m_down] = 1
-                A[m, m_right] = 1
+                A[m, m_right] = 2
                 A[m, m_near] = 1
                 A[m, m_far] = 1
                 A[m, m] = -6
@@ -147,7 +158,7 @@ for i in range(nw):
             elif i == nw - 1 and 1 <= j and j <= nl - 2 and 1 <= k and k <= nh - 2:
                 A[m, m_up] = 1
                 A[m, m_down] = 1
-                A[m, m_left] = 1
+                A[m, m_left] = 2
                 A[m, m_near] = 1
                 A[m, m_far] = 1
                 A[m, m] = -6
@@ -327,10 +338,11 @@ for i in range(nw):
 
             else:
                 print("Point (" + str(i) + ', ' + str(j) + ', ' + str(k) + ") missed!")
-                print("Associated point index is " + str(k))
+                print("Associated point index is " + str(m))
                 raise Exception()
 
-x = sparse.linalg.spsolve(A, b)
+# Solving our system
+x = scipy.sparse.linalg.spsolve(A, b)
 
 # Now we return our solution to the 3D discrete domain
 # In this matrix we will store the solution in the 3D domain
@@ -342,22 +354,25 @@ for m in range(N):
 
 # Adding the borders, as they have known values
 ub = np.zeros((nw + 2, nl + 2, nh + 2))
-ub[1:nh + 1, 1:nv + 1, 1:nh + 1] = u[:, :, :]
+ub[1:nw + 1, 1:nl + 1, 1:nh + 1] = u[:, :, :]
 
 # Dirichlet boundary condition
+# Top
+ub[0:nw + 2, 0:nl + 2, nh + 1] = AMBIENT_TEMPERATURE
 
+# Storing our results
+np.save(FILENAME, ub)
 
-fig = plt.figure()
-ax = fig.gca(projection = '3d')
-ax.set_title('Laplace equation solution with a surface')
+X = np.arange(0, ub.shape[0] - 2, 1, dtype = int)
+Y = np.arange(0, ub.shape[1] - 2, 1, dtype = int)
+Z = np.arange(0, ub.shape[2] - 2, 1, dtype = int)
+X, Y, Z = np.meshgrid(X, Y, Z)
+
+fig = mpl.figure()
+ax = fig.add_subplot(111, projection = '3d')
+ax.scatter(Z, X, Y, c = x, marker = 'o')
+ax.set_title('Aquarium temperatures')
 ax.set_xlabel('x')
 ax.set_ylabel('y')
 ax.set_zlabel('z')
-
-# Plot the surface
-surf = ax.plot_surface(X, Y, ub.T, cmap = cm.coolwarm, linewidth = 0, antialiased = True)
-
-# Add a color bar which maps values to colors
-fig.colorbar(surf, shrink = 0.5, aspect = 5)
-
-plt.show()
+mpl.show()
