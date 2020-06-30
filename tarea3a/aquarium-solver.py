@@ -132,7 +132,7 @@ for i in range(nw):
                 A[m, m_near] = 1
                 A[m, m_far] = 1
                 A[m, m] = -6
-                b[m] = -2 * h * WINDOW_LOSS
+                b[m] = 2 * h * WINDOW_LOSS
 
             # Up face
             elif 1 <= i and i <= nw - 2 and j == nl - 1 and 1 <= k and k <= nh - 2:
@@ -152,7 +152,7 @@ for i in range(nw):
                 A[m, m_near] = 1
                 A[m, m_far] = 1
                 A[m, m] = -6
-                b[m] = -2 * h * WINDOW_LOSS
+                b[m] = 2 * h * WINDOW_LOSS
 
             # Right face
             elif i == nw - 1 and 1 <= j and j <= nl - 2 and 1 <= k and k <= nh - 2:
@@ -166,16 +166,16 @@ for i in range(nw):
 
             # Down near edge
             elif 1 <= i and i <= nw - 2 and j == 0 and k == 0:
-                A[m, m_up] = 1
+                A[m, m_up] = 2
                 A[m, m_left] = 1
                 A[m, m_right] = 1
                 A[m, m_far] = 1
                 A[m, m] = -6
-                b[m] = -AMBIENT_TEMPERATURE -2 * h * WINDOW_LOSS
+                b[m] = -AMBIENT_TEMPERATURE + 2 * h * WINDOW_LOSS
 
             # Up near edge
             elif 1 <= i and i <= nw - 2 and j == nl - 1 and k == 0:
-                A[m, m_down] = 1
+                A[m, m_down] = 2
                 A[m, m_left] = 1
                 A[m, m_right] = 1
                 A[m, m_far] = 1
@@ -186,35 +186,35 @@ for i in range(nw):
             elif i == 0 and 1 <= j and j <= nl - 2 and k == 0:
                 A[m, m_up] = 1
                 A[m, m_down] = 1
-                A[m, m_right] = 1
+                A[m, m_right] = 2
                 A[m, m_far] = 1
                 A[m, m] = -6
-                b[m] = -AMBIENT_TEMPERATURE - 2 * h * WINDOW_LOSS
+                b[m] = -AMBIENT_TEMPERATURE + 2 * h * WINDOW_LOSS
 
             # Right near edge
             elif i == nw - 1 and 1 <= j and j <= nl - 2 and k == 0:
                 A[m, m_up] = 1
                 A[m, m_down] = 1
-                A[m, m_left] = 1
+                A[m, m_left] = 2
                 A[m, m_far] = 1
                 A[m, m] = -6
                 b[m] = -AMBIENT_TEMPERATURE - 2 * h * WINDOW_LOSS
 
             # Down far edge
             elif 1 <= i and i <= nw - 2 and j == 0 and k == nh - 1:
-                A[m, m_up] = 1
+                A[m, m_up] = 2
                 A[m, m_left] = 1
                 A[m, m_right] = 1
-                A[m, m_near] = 1
+                A[m, m_near] = 2
                 A[m, m] = -6
-                b[m] = -2 * h * WINDOW_LOSS
+                b[m] = 2 * h * WINDOW_LOSS
 
             # Up far edge
             elif 1 <= i and i <= nw - 2 and j == nl - 1 and k == nh - 1:
-                A[m, m_down] = 1
+                A[m, m_down] = 2
                 A[m, m_left] = 1
                 A[m, m_right] = 1
-                A[m, m_near] = 1
+                A[m, m_near] = 2
                 A[m, m] = -6
                 b[m] = -2 * h * WINDOW_LOSS
 
@@ -222,51 +222,51 @@ for i in range(nw):
             elif i == 0 and 1 <= j and j <= nl - 2 and k == nh - 1:
                 A[m, m_up] = 1
                 A[m, m_down] = 1
-                A[m, m_right] = 1
-                A[m, m_near] = 1
+                A[m, m_right] = 2
+                A[m, m_near] = 2
                 A[m, m] = -6
-                b[m] = -2 * h * WINDOW_LOSS
+                b[m] = 2 * h * WINDOW_LOSS
 
             # Right far edge
             elif i == nw - 1 and 1 <= j and j <= nl - 2 and k == nh - 1:
                 A[m, m_up] = 1
                 A[m, m_down] = 1
-                A[m, m_left] = 1
-                A[m, m_near] = 1
+                A[m, m_left] = 2
+                A[m, m_near] = 2
                 A[m, m] = -6
                 b[m] = -2 * h * WINDOW_LOSS
 
             # Down left corner edge
             elif i == 0 and j == 0 and 1 <= k and k <= nh - 2:
-                A[m, m_up] = 1
-                A[m, m_right] = 1
+                A[m, m_up] = 2
+                A[m, m_right] = 2
                 A[m, m_near] = 1
                 A[m, m_far] = 1
                 A[m, m] = -6
-                b[m] = -4 * h * WINDOW_LOSS
+                b[m] = 4 * h * WINDOW_LOSS
 
             # Down right corner edge
             elif i == nw - 1 and j == 0 and 1 <= k and k <= nh - 2:
-                A[m, m_up] = 1
-                A[m, m_left] = 1
+                A[m, m_up] = 2
+                A[m, m_left] = 2
                 A[m, m_near] = 1
                 A[m, m_far] = 1
                 A[m, m] = -6
-                b[m] = -4 * h * WINDOW_LOSS
+                b[m] = 0
 
             # Up left corner edge
             elif i == 0 and j == nl - 1 and 1 <= k and k <= nh - 2:
-                A[m, m_down] = 1
-                A[m, m_right] = 1
+                A[m, m_down] = 2
+                A[m, m_right] = 2
                 A[m, m_near] = 1
                 A[m, m_far] = 1
                 A[m, m] = -6
-                b[m] = -4 * h * WINDOW_LOSS
+                b[m] = 0
 
             # Up right corner edge
             elif i == nw - 1 and j == nl - 1 and 1 <= k and k <= nh - 2:
-                A[m, m_down] = 1
-                A[m, m_left] = 1
+                A[m, m_down] = 2
+                A[m, m_left] = 2
                 A[m, m_near] = 1
                 A[m, m_far] = 1
                 A[m, m] = -6
@@ -274,65 +274,65 @@ for i in range(nw):
 
             # Down left near corner
             elif i == 0 and j == 0 and k == 0:
-                A[m, m_up] = 1
-                A[m, m_right] = 1
+                A[m, m_up] = 2
+                A[m, m_right] = 2
                 A[m, m_far] = 1
                 A[m, m] = -6
-                b[m] = -AMBIENT_TEMPERATURE - 4 * h * WINDOW_LOSS
+                b[m] = -AMBIENT_TEMPERATURE + 4 * h * WINDOW_LOSS
 
             # Down right near corner
             elif i == nw - 1 and j == 0 and k == 0:
-                A[m, m_up] = 1
-                A[m, m_left] = 1
+                A[m, m_up] = 2
+                A[m, m_left] = 2
                 A[m, m_far] = 1
                 A[m, m] = -6
-                b[m] = -AMBIENT_TEMPERATURE - 4 * h * WINDOW_LOSS
+                b[m] = -AMBIENT_TEMPERATURE
 
             # Up left near corner
             elif i == 0 and j == nl - 1 and k == 0:
-                A[m, m_down] = 1
-                A[m, m_right] = 1
+                A[m, m_down] = 2
+                A[m, m_right] = 2
                 A[m, m_far] = 1
                 A[m, m] = -6
-                b[m] = -AMBIENT_TEMPERATURE - 4 * h * WINDOW_LOSS
+                b[m] = -AMBIENT_TEMPERATURE
 
             # Up right near corner
             elif i == nw - 1 and j == nl - 1 and k == 0:
-                A[m, m_down] = 1
-                A[m, m_left] = 1
+                A[m, m_down] = 2
+                A[m, m_left] = 2
                 A[m, m_far] = 1
                 A[m, m] = -6
                 b[m] = -AMBIENT_TEMPERATURE - 4 * h * WINDOW_LOSS
 
             # Down left far corner
             elif i == 0 and j == 0 and k == nh - 1:
-                A[m, m_up] = 1
-                A[m, m_right] = 1
-                A[m, m_near] = 1
+                A[m, m_up] = 2
+                A[m, m_right] = 2
+                A[m, m_near] = 2
                 A[m, m] = -6
-                b[m] = -4 * h * WINDOW_LOSS
+                b[m] = 4 * h * WINDOW_LOSS
 
             # Down right far corner
             elif i == nw - 1 and j == 0 and k == nh - 1:
-                A[m, m_up] = 1
-                A[m, m_left] = 1
-                A[m, m_near] = 1
+                A[m, m_up] = 2
+                A[m, m_left] = 2
+                A[m, m_near] = 2
                 A[m, m] = -6
-                b[m] = -4 * h * WINDOW_LOSS
+                b[m] = 0
 
             # Up left far corner
             elif i == 0 and j == nl - 1 and k == nh - 1:
-                A[m, m_down] = 1
-                A[m, m_right] = 1
-                A[m, m_near] = 1
+                A[m, m_down] = 2
+                A[m, m_right] = 2
+                A[m, m_near] = 2
                 A[m, m] = -6
-                b[m] = -4 * h * WINDOW_LOSS
+                b[m] = 0
 
             # Up right far corner
             elif i == nw - 1 and j == nl - 1 and k == nh - 1:
-                A[m, m_down] = 1
-                A[m, m_left] = 1
-                A[m, m_near] = 1
+                A[m, m_down] = 2
+                A[m, m_left] = 2
+                A[m, m_near] = 2
                 A[m, m] = -6
                 b[m] = -4 * h * WINDOW_LOSS
 
