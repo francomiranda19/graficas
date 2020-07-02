@@ -44,8 +44,8 @@ def getM(i, j, k):
     return i + j * nw + nw * nl * k
 
 def getIJK(m):
-    i = m % nw
-    j = m // nw - nl * (m // (nw * nl))
+    i = m % (nw * nl) % nw
+    j = m % (nw * nl) // nw
     k = m // (nw * nl)
     return (i, j, k)
 
@@ -68,8 +68,8 @@ for i in range(nw):
             m_down = getM(i, j - 1, k)
             m_left = getM(i - 1, j, k)
             m_right = getM(i + 1, j, k)
-            m_near = getM(i, j, k - 1)
-            m_far = getM(i, j, k + 1)
+            m_near = getM(i, j, k + 1)
+            m_far = getM(i, j, k - 1)
 
             # Depending on the location of the point, the equation is different
             # Interior
@@ -84,7 +84,7 @@ for i in range(nw):
                 b[m] = 0
 
             # Near face
-            elif 1 <= i and i <= nw - 2 and 1 <= j and j <= nl - 2 and k == 0:
+            elif 1 <= i and i <= nw - 2 and 1 <= j and j <= nl - 2 and k == nh - 1:
                 A[m, m_up] = 1
                 A[m, m_down] = 1
                 A[m, m_left] = 1
@@ -93,19 +93,8 @@ for i in range(nw):
                 A[m, m] = -6
                 b[m] = -AMBIENT_TEMPERATURE
 
-            # Far face (without heaters)
-            elif 1 <= i and i <= nw - 2 and 1 <= j and j <= nl - 2 and k == nh - 1 \
-                and not (nw // 3 <= 1 and i <= (2 * nw) // 3 and ((nl // 5 <= j and j <= (2 * nl) // 5) or ((3 * nl) // 5 <= j and j <= (4 * nl) // 5)) and k == nh - 1):
-                A[m, m_up] = 1
-                A[m, m_down] = 1
-                A[m, m_left] = 1
-                A[m, m_right] = 1
-                A[m, m_near] = 2
-                A[m, m] = -6
-                b[m] = 0
-
             # Heater A
-            elif nw // 3 <= i and i <= (2 * nw) // 3 and (3 * nl) // 5 <= j and j <= (4 * nl) // 5:
+            elif nw // 3 <= i and i <= (2 * nw) // 3 and (3 * nl) // 5 <= j and j <= (4 * nl) // 5 and k == 0:
                 A[m, m_up] = 1
                 A[m, m_down] = 1
                 A[m, m_left] = 1
@@ -115,7 +104,7 @@ for i in range(nw):
                 b[m] = -HEATER_A
 
             # Heater B
-            elif nw // 3 <= i and i <= (2 * nw) // 3 and nl // 5 <= j and j <= (2 * nl) // 5:
+            elif nw // 3 <= i and i <= (2 * nw) // 3 and nl // 5 <= j and j <= (2 * nl) // 5 and k == 0:
                 A[m, m_up] = 1
                 A[m, m_down] = 1
                 A[m, m_left] = 1
@@ -123,6 +112,16 @@ for i in range(nw):
                 A[m, m_near] = 1
                 A[m, m] = -6
                 b[m] = -HEATER_B
+
+            # Far face (without heaters)
+            elif 1 <= i and i <= nw - 2 and 1 <= j and j <= nl - 2 and k == 0:
+                A[m, m_up] = 1
+                A[m, m_down] = 1
+                A[m, m_left] = 1
+                A[m, m_right] = 1
+                A[m, m_near] = 2
+                A[m, m] = -6
+                b[m] = 0
 
             # Down face
             elif 1 <= i and i <= nw - 2 and j == 0 and 1 <= k and k <= nh - 2:
@@ -165,7 +164,7 @@ for i in range(nw):
                 b[m] = -2 * h * WINDOW_LOSS
 
             # Down near edge
-            elif 1 <= i and i <= nw - 2 and j == 0 and k == 0:
+            elif 1 <= i and i <= nw - 2 and j == 0 and k == nh - 1:
                 A[m, m_up] = 2
                 A[m, m_left] = 1
                 A[m, m_right] = 1
@@ -174,7 +173,7 @@ for i in range(nw):
                 b[m] = -AMBIENT_TEMPERATURE + 2 * h * WINDOW_LOSS
 
             # Up near edge
-            elif 1 <= i and i <= nw - 2 and j == nl - 1 and k == 0:
+            elif 1 <= i and i <= nw - 2 and j == nl - 1 and k == nh - 1:
                 A[m, m_down] = 2
                 A[m, m_left] = 1
                 A[m, m_right] = 1
@@ -183,7 +182,7 @@ for i in range(nw):
                 b[m] = -AMBIENT_TEMPERATURE - 2 * h * WINDOW_LOSS
 
             # Left near edge
-            elif i == 0 and 1 <= j and j <= nl - 2 and k == 0:
+            elif i == 0 and 1 <= j and j <= nl - 2 and k == nh - 1:
                 A[m, m_up] = 1
                 A[m, m_down] = 1
                 A[m, m_right] = 2
@@ -192,7 +191,7 @@ for i in range(nw):
                 b[m] = -AMBIENT_TEMPERATURE + 2 * h * WINDOW_LOSS
 
             # Right near edge
-            elif i == nw - 1 and 1 <= j and j <= nl - 2 and k == 0:
+            elif i == nw - 1 and 1 <= j and j <= nl - 2 and k == nh - 1:
                 A[m, m_up] = 1
                 A[m, m_down] = 1
                 A[m, m_left] = 2
@@ -201,7 +200,7 @@ for i in range(nw):
                 b[m] = -AMBIENT_TEMPERATURE - 2 * h * WINDOW_LOSS
 
             # Down far edge
-            elif 1 <= i and i <= nw - 2 and j == 0 and k == nh - 1:
+            elif 1 <= i and i <= nw - 2 and j == 0 and k == 0:
                 A[m, m_up] = 2
                 A[m, m_left] = 1
                 A[m, m_right] = 1
@@ -210,7 +209,7 @@ for i in range(nw):
                 b[m] = 2 * h * WINDOW_LOSS
 
             # Up far edge
-            elif 1 <= i and i <= nw - 2 and j == nl - 1 and k == nh - 1:
+            elif 1 <= i and i <= nw - 2 and j == nl - 1 and k == 0:
                 A[m, m_down] = 2
                 A[m, m_left] = 1
                 A[m, m_right] = 1
@@ -219,7 +218,7 @@ for i in range(nw):
                 b[m] = -2 * h * WINDOW_LOSS
 
             # Left far edge
-            elif i == 0 and 1 <= j and j <= nl - 2 and k == nh - 1:
+            elif i == 0 and 1 <= j and j <= nl - 2 and k == 0:
                 A[m, m_up] = 1
                 A[m, m_down] = 1
                 A[m, m_right] = 2
@@ -228,7 +227,7 @@ for i in range(nw):
                 b[m] = 2 * h * WINDOW_LOSS
 
             # Right far edge
-            elif i == nw - 1 and 1 <= j and j <= nl - 2 and k == nh - 1:
+            elif i == nw - 1 and 1 <= j and j <= nl - 2 and k == 0:
                 A[m, m_up] = 1
                 A[m, m_down] = 1
                 A[m, m_left] = 2
@@ -273,7 +272,7 @@ for i in range(nw):
                 b[m] = -4 * h * WINDOW_LOSS
 
             # Down left near corner
-            elif i == 0 and j == 0 and k == 0:
+            elif i == 0 and j == 0 and k == nh - 1:
                 A[m, m_up] = 2
                 A[m, m_right] = 2
                 A[m, m_far] = 1
@@ -281,7 +280,7 @@ for i in range(nw):
                 b[m] = -AMBIENT_TEMPERATURE + 4 * h * WINDOW_LOSS
 
             # Down right near corner
-            elif i == nw - 1 and j == 0 and k == 0:
+            elif i == nw - 1 and j == 0 and k == nh - 1:
                 A[m, m_up] = 2
                 A[m, m_left] = 2
                 A[m, m_far] = 1
@@ -289,7 +288,7 @@ for i in range(nw):
                 b[m] = -AMBIENT_TEMPERATURE
 
             # Up left near corner
-            elif i == 0 and j == nl - 1 and k == 0:
+            elif i == 0 and j == nl - 1 and k == nh - 1:
                 A[m, m_down] = 2
                 A[m, m_right] = 2
                 A[m, m_far] = 1
@@ -297,7 +296,7 @@ for i in range(nw):
                 b[m] = -AMBIENT_TEMPERATURE
 
             # Up right near corner
-            elif i == nw - 1 and j == nl - 1 and k == 0:
+            elif i == nw - 1 and j == nl - 1 and k == nh - 1:
                 A[m, m_down] = 2
                 A[m, m_left] = 2
                 A[m, m_far] = 1
@@ -305,7 +304,7 @@ for i in range(nw):
                 b[m] = -AMBIENT_TEMPERATURE - 4 * h * WINDOW_LOSS
 
             # Down left far corner
-            elif i == 0 and j == 0 and k == nh - 1:
+            elif i == 0 and j == 0 and k == 0:
                 A[m, m_up] = 2
                 A[m, m_right] = 2
                 A[m, m_near] = 2
@@ -313,7 +312,7 @@ for i in range(nw):
                 b[m] = 4 * h * WINDOW_LOSS
 
             # Down right far corner
-            elif i == nw - 1 and j == 0 and k == nh - 1:
+            elif i == nw - 1 and j == 0 and k == 0:
                 A[m, m_up] = 2
                 A[m, m_left] = 2
                 A[m, m_near] = 2
@@ -321,7 +320,7 @@ for i in range(nw):
                 b[m] = 0
 
             # Up left far corner
-            elif i == 0 and j == nl - 1 and k == nh - 1:
+            elif i == 0 and j == nl - 1 and k == 0:
                 A[m, m_down] = 2
                 A[m, m_right] = 2
                 A[m, m_near] = 2
@@ -329,7 +328,7 @@ for i in range(nw):
                 b[m] = 0
 
             # Up right far corner
-            elif i == nw - 1 and j == nl - 1 and k == nh - 1:
+            elif i == nw - 1 and j == nl - 1 and k == 0:
                 A[m, m_down] = 2
                 A[m, m_left] = 2
                 A[m, m_near] = 2
@@ -361,6 +360,7 @@ ub[1:nw + 1, 1:nl + 1, 1:nh + 1] = u[:, :, :]
 ub[0:nw + 2, 0:nl + 2, nh + 1] = AMBIENT_TEMPERATURE
 
 # Storing our results
+
 np.save(FILENAME, ub)
 
 X = np.arange(0, ub.shape[0] - 2, 1, dtype = int)
