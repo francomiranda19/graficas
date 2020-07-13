@@ -5,6 +5,7 @@ import numpy as np
 import json
 import sys
 import matplotlib.pyplot as mpl
+from random import *
 
 import transformations as tr
 import easy_shaders as es
@@ -40,13 +41,10 @@ def fast_marching_cube(X, Y, Z, temperatures, t_value):
     for i in range(1, X.shape[0] - 1):
         for j in range(1, X.shape[1] - 1):
             for k in range(1, X.shape[2] - 1):
-                if len(temperatures[i - 1:i + 1, j - 1:j + 1, k - 1:k + 1]) > 0:
-                    t_min = temperatures[i - 1:i + 1, j - 1:j + 1, k - 1:k + 1].min()
-                    t_max = temperatures[i - 1:i + 1, j - 1:j + 1, k - 1:k + 1].max()
-                    if t_min >= t_value - 2 and t_max <= t_value + 2:
-                        voxels[i, j, k] = True
-                    else:
-                        voxels[i, j, k] = False
+                t_min = temperatures[i - 1:i + 1, j - 1:j + 1, k - 1:k + 1].min()
+                t_max = temperatures[i - 1:i + 1, j - 1:j + 1, k - 1:k + 1].max()
+                if t_min >= t_value - 2 and t_max <= t_value + 2:
+                    voxels[i, j, k] = True
                 else:
                     voxels[i, j, k] = False
     return voxels
@@ -115,6 +113,7 @@ class Controller:
         self.a = True
         self.b = False
         self.c = False
+        self.fillPolygon = True
 
 # We will use the global controller as communication with the callback function
 controller = Controller()
@@ -135,6 +134,8 @@ def on_key(window, key, scancode, action, mods):
         controller.a = False
         controller.b = False
         controller.c = True
+    elif key == glfw.KEY_SPACE:
+        controller.fillPolygon = not controller.fillPolygon
     elif key == glfw.KEY_ESCAPE:
         glfw.set_window_should_close(window, True)
 
@@ -145,21 +146,24 @@ class Fish:
 
         # Body of the fish
         self.body = sg.SceneGraphNode('body')
-        self.body.transform = tr.scale(0.6, 0.3, 0.3)
+        self.body.transform = tr.matmul([tr.uniformScale(2), tr.scale(0.6, 0.2, 0.3)])
         self.body.childs += [self.gpu_body]
 
         # Tail of the fish
         self.tail = sg.SceneGraphNode('tail')
-        self.tail.transform = tr.matmul([tr.translate(-0.4, 0, 0), tr.scale(0.2, 0.05, 0.2)])
+        self.tail.transform = tr.matmul([tr.uniformScale(2), tr.translate(-0.4, 0, 0), tr.scale(0.2, 0.05, 0.2)])
         self.tail.childs += [self.gpu_tail]
 
         self.tailRotation = sg.SceneGraphNode('tailRotation')
         self.tailRotation.childs += [self.tail]
 
+        self.scaledFish = sg.SceneGraphNode('scaledFish')
+        self.scaledFish.transform = tr.uniformScale(0.5)
+        self.scaledFish.childs += [self.body, self.tailRotation]
+
         # Creating the fish
         self.fish = sg.SceneGraphNode('fish')
-        self.fish.childs += [self.body]
-        self.fish.childs += [self.tailRotation]
+        self.fish.childs += [self.scaledFish]
 
     # Get fish
     def get_fish(self):
@@ -171,7 +175,7 @@ if __name__ == '__main__':
         sys.exit()
     width = 600
     height = 600
-    window = glfw.create_window(width, height, 'Aquarium', None, None)
+    window = glfw.create_window(width, height, 'Aquarium-view', None, None)
     if not window:
         glfw.terminate()
         sys.exit()
@@ -187,7 +191,7 @@ if __name__ == '__main__':
     glUseProgram(pipeline.shaderProgram)
 
     # Setting up the clear screen color
-    glClearColor(0.15, 0.15, 0.15, 1.0)
+    glClearColor(0.0, 0.0, 0.0, 1.0)
 
     # As we work in 3D, we need to check which part is in front, and which one is at the back
     glEnable(GL_DEPTH_TEST)
@@ -207,26 +211,32 @@ if __name__ == '__main__':
     voxelsC = fast_marching_cube(X, Y, Z, load_voxels, T_C)
 
     isosurfaceA = bs.Shape([], [])
+    pointsA = []
     for i in range(X.shape[0] - 1):
         for j in range(X.shape[1] - 1):
             for k in range(X.shape[2] - 1):
                 if voxelsA[i, j, k]:
+                    pointsA.append((i, j, k))
                     temp_shape = createColorCube2(i, j, k, X, Y, Z, 0.0, 0.5, 0.0)
                     merge(isosurfaceA, 6, temp_shape)
 
     isosurfaceB = bs.Shape([], [])
+    pointsB = []
     for i in range(X.shape[0] - 1):
         for j in range(X.shape[1] - 1):
             for k in range(X.shape[2] - 1):
                 if voxelsB[i, j, k]:
+                    pointsB.append((i, j, k))
                     temp_shape = createColorCube2(i, j, k, X, Y, Z, 0.0, 0.0, 0.5)
                     merge(isosurfaceB, 6, temp_shape)
 
     isosurfaceC = bs.Shape([], [])
+    pointsC = []
     for i in range(X.shape[0] - 1):
         for j in range(X.shape[1] - 1):
             for k in range(X.shape[2] - 1):
                 if voxelsC[i, j, k]:
+                    pointsC.append((i, j, k))
                     temp_shape = createColorCube2(i, j, k, X, Y, Z, 0.5, 0.0, 0.0)
                     merge(isosurfaceC, 6, temp_shape)
 
@@ -235,7 +245,7 @@ if __name__ == '__main__':
     surfaceA.transform = tr.translate(-20, -10, -10)
     surfaceA.childs += [gpu_surfaceA]
     scaledSurfaceA = sg.SceneGraphNode('scaledSurfaceA')
-    scaledSurfaceA.transform = tr.uniformScale(0.3)
+    scaledSurfaceA.transform = tr.uniformScale(0.5)
     scaledSurfaceA.childs += [surfaceA]
 
     gpu_surfaceB = es.toGPUShape(isosurfaceB)
@@ -243,7 +253,7 @@ if __name__ == '__main__':
     surfaceB.transform = tr.translate(-20, -10, -10)
     surfaceB.childs += [gpu_surfaceB]
     scaledSurfaceB = sg.SceneGraphNode('scaledSurfaceB')
-    scaledSurfaceB.transform = tr.uniformScale(0.3)
+    scaledSurfaceB.transform = tr.uniformScale(0.5)
     scaledSurfaceB.childs += [surfaceB]
 
     gpu_surfaceC = es.toGPUShape(isosurfaceC)
@@ -251,13 +261,38 @@ if __name__ == '__main__':
     surfaceC.transform = tr.translate(-20, -10, -10)
     surfaceC.childs += [gpu_surfaceC]
     scaledSurfaceC = sg.SceneGraphNode('scaledSurfaceC')
-    scaledSurfaceC.transform = tr.uniformScale(0.3)
+    scaledSurfaceC.transform = tr.uniformScale(0.5)
     scaledSurfaceC.childs += [surfaceC]
+
+    fishA = Fish(1.0, 0.0, 0.0)
+    fishB = Fish(0.0, 1.0, 0.0)
+    fishC = Fish(0.0, 0.0, 1.0)
+
+    fishesA = []
+    fishesB = []
+    fishesC = []
+
+    for i in range(N_A):
+        na = randint(0, len(pointsA) - 1)
+        fishesA.append(fishA.get_fish())
+        translationA = sg.findNode(fishesA[i], 'scaledFish')
+        translationA.transform = tr.translate(pointsA[na][1] - 20, pointsA[na][0] - 10, pointsA[na][2] - 10)
+        pointsA.pop(na)
+    for i in range(N_B):
+        nb = randint(0, len(pointsB) - 1)
+        fishesB.append(fishB.get_fish())
+        sg.findNode(fishesB[i], 'scaledFish').transform = tr.translate(pointsB[nb][1] - 20, pointsB[nb][0] - 10, pointsB[nb][2] - 10)
+        pointsB.pop(nb)
+    for i in range(N_C):
+        nc = randint(0, len(pointsC) - 1)
+        fishesC.append(fishC.get_fish())
+        sg.findNode(fishesC[i], 'scaledFish').transform = tr.translate(pointsC[nc][1] - 20, pointsC[nc][0] - 10, pointsC[nc][2] - 10)
+        pointsC.pop(nc)
 
     t0 = glfw.get_time()
     camera_theta = np.pi / 4
     rotation = 0
-    zoom = 0.3
+    zoom = 0.5
 
     while not glfw.window_should_close(window):
         # Using GLFW to check for input events
@@ -274,8 +309,8 @@ if __name__ == '__main__':
             camera_theta += 2 * dt
 
         # Setting up the view transform
-        camX = 15 * np.sin(camera_theta)
-        camY = 15 * np.cos(camera_theta)
+        camX = 20 * np.sin(camera_theta)
+        camY = 20 * np.cos(camera_theta)
 
         viewPos = np.array([camX, camY, 10])
         view = tr.lookAt(
@@ -292,19 +327,42 @@ if __name__ == '__main__':
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
+        # Filling or not the shapes depending on the controller state
+        if controller.fillPolygon:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+        else:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+
         # Zoom
         if glfw.get_key(window, glfw.KEY_UP) == glfw.PRESS:
-            if zoom < 1:
-                zoom += 0.005
+            if zoom < 1.7:
+                zoom += 0.05
         elif glfw.get_key(window, glfw.KEY_DOWN) == glfw.PRESS:
-            if zoom > 0.2:
-                zoom -= 0.005
+            if zoom > 0.4:
+                zoom -= 0.05
+
         # Zoom transformations
         scaledSurfaceA.transform = tr.uniformScale(zoom)
         scaledSurfaceB.transform = tr.uniformScale(zoom)
         scaledSurfaceC.transform = tr.uniformScale(zoom)
 
-        # dty determines the movement of the wings
+        # Fish transformations
+        for i in range(len(fishesA)):
+            fishesA[i].transform = tr.uniformScale(zoom)
+            tailRotationA = sg.findNode(fishesA[i], 'tailRotation')
+            tailRotationA.transform = tr.rotationZ(rotation)
+
+        for i in range(len(fishesB)):
+            fishesB[i].transform = tr.uniformScale(zoom)
+            tailRotationB = sg.findNode(fishesB[i], 'tailRotation')
+            tailRotationB.transform = tr.rotationZ(rotation)
+
+        for i in range(len(fishesC)):
+            fishesC[i].transform = tr.uniformScale(zoom)
+            tailRotationC = sg.findNode(fishesC[i], 'tailRotation')
+            tailRotationC.transform = tr.rotationZ(rotation)
+
+        # dty determines the movement of the tails
         dty = np.sin(5 * t0)
         if dty > 0:
             rotation += dt
@@ -323,6 +381,13 @@ if __name__ == '__main__':
             sg.drawSceneGraphNode(scaledSurfaceB, pipeline, 'model')
         elif controller.c:
             sg.drawSceneGraphNode(scaledSurfaceC, pipeline, 'model')
+
+        for i in range(len(fishesA)):
+            sg.drawSceneGraphNode(fishesA[i], pipeline, 'model')
+        for i in range(len(fishesB)):
+            sg.drawSceneGraphNode(fishesB[i], pipeline, 'model')
+        for i in range(len(fishesC)):
+            sg.drawSceneGraphNode(fishesC[i], pipeline, 'model')
 
         # Once the drawing is rendered, buffers are swapped so an uncomplete drawing is never seen
         glfw.swap_buffers(window)
