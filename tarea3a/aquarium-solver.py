@@ -360,20 +360,4 @@ ub[1:nw + 1, 1:nl + 1, 1:nh + 1] = u[:, :, :]
 ub[0:nw + 2, 0:nl + 2, nh + 1] = AMBIENT_TEMPERATURE
 
 # Storing our results
-
 np.save(FILENAME, ub)
-
-X = np.arange(0, ub.shape[0] - 2, 1, dtype = int)
-Y = np.arange(0, ub.shape[1] - 2, 1, dtype = int)
-Z = np.arange(0, ub.shape[2] - 2, 1, dtype = int)
-X, Y, Z = np.meshgrid(X, Y, Z)
-
-fig = mpl.figure()
-ax = fig.add_subplot(111, projection = '3d')
-scat = ax.scatter(Z, X, Y, c = x, marker = 'o')
-fig.colorbar(scat, shrink = 0.5, aspect = 5)
-ax.set_title('Aquarium temperatures')
-ax.set_xlabel('x')
-ax.set_ylabel('y')
-ax.set_zlabel('z')
-mpl.show()
