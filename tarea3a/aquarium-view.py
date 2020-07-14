@@ -240,6 +240,19 @@ if __name__ == '__main__':
                     temp_shape = createColorCube2(i, j, k, X, Y, Z, 0.5, 0.0, 0.0)
                     merge(isosurfaceC, 6, temp_shape)
 
+    aquariumBorder = bs.Shape([], [])
+    for i in range(X.shape[0] - 1):
+        for j in range(X.shape[1] - 1):
+            for k in range(X.shape[2] - 1):
+                if ((i == 0 or i == X.shape[0] - 2) and (
+                        j == 0 or j == X.shape[1] - 2 or k == 0 or k == X.shape[2] - 2)) or (
+                        (j == 0 or j == X.shape[1] - 2) and (
+                        i == 0 or i == X.shape[0] - 2 or k == 0 or k == X.shape[2] - 2)) or (
+                        (j == 0 or j == X.shape[1] - 2 or i == 0 or i == X.shape[0] - 2) and (
+                        k == 0 or k == X.shape[2] - 2)):
+                    temp_shape = createColorCube2(i, j, k, X, Y, Z, 1.0, 1.0, 1.0)
+                    merge(aquariumBorder, 6, temp_shape)
+
     gpu_surfaceA = es.toGPUShape(isosurfaceA)
     surfaceA = sg.SceneGraphNode('surfaceA')
     surfaceA.transform = tr.translate(-20, -10, -10)
@@ -263,6 +276,14 @@ if __name__ == '__main__':
     scaledSurfaceC = sg.SceneGraphNode('scaledSurfaceC')
     scaledSurfaceC.transform = tr.uniformScale(0.5)
     scaledSurfaceC.childs += [surfaceC]
+
+    border = es.toGPUShape(aquariumBorder)
+    borderAquarium = sg.SceneGraphNode('borderAquarium')
+    borderAquarium.transform = tr.translate(-19, -9, -9)
+    borderAquarium.childs += [border]
+    scaledBorder = sg.SceneGraphNode('scaledBorder')
+    scaledBorder.transform = tr.uniformScale(0.5)
+    scaledBorder.childs += [borderAquarium]
 
     fishA = Fish(1.0, 0.0, 0.0)
     fishB = Fish(0.0, 1.0, 0.0)
@@ -345,6 +366,7 @@ if __name__ == '__main__':
         scaledSurfaceA.transform = tr.uniformScale(zoom)
         scaledSurfaceB.transform = tr.uniformScale(zoom)
         scaledSurfaceC.transform = tr.uniformScale(zoom)
+        scaledBorder.transform = tr.uniformScale(zoom)
 
         # Fish transformations
         for i in range(len(fishesA)):
@@ -388,6 +410,8 @@ if __name__ == '__main__':
             sg.drawSceneGraphNode(fishesB[i], pipeline, 'model')
         for i in range(len(fishesC)):
             sg.drawSceneGraphNode(fishesC[i], pipeline, 'model')
+
+        sg.drawSceneGraphNode(scaledBorder, pipeline, 'model')
 
         # Once the drawing is rendered, buffers are swapped so an uncomplete drawing is never seen
         glfw.swap_buffers(window)
