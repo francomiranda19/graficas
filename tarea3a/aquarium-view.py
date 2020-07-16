@@ -16,17 +16,17 @@ import scene_graph as sg
 setup = sys.argv[1]
 with open(setup) as file:
     data = json.load(file)
-    for parameter in data['parameters']:
+    for line in data:
         # Solution
-        FILENAME = parameter['filename']
+        FILENAME = data['filename']
         # Ideal temperatures
-        T_A = parameter['t_a']
-        T_B = parameter['t_b']
-        T_C = parameter['t_c']
+        T_A = data['t_a']
+        T_B = data['t_b']
+        T_C = data['t_c']
         # Number of fishes for each type
-        N_A = parameter['n_a']
-        N_B = parameter['n_b']
-        N_C = parameter['n_c']
+        N_A = data['n_a']
+        N_B = data['n_b']
+        N_C = data['n_c']
 
 def fast_marching_cube(X, Y, Z, temperatures, t_value):
     dims = X.shape[0] - 1, X.shape[1] - 1, X.shape[2] - 1
