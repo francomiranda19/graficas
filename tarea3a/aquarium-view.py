@@ -12,7 +12,9 @@ import easy_shaders as es
 import basic_shapes as bs
 import scene_graph as sg
 
-with open('view-setup.json') as file:
+# Setup
+setup = sys.argv[1]
+with open(setup) as file:
     data = json.load(file)
     for parameter in data['parameters']:
         # Solution
@@ -25,15 +27,6 @@ with open('view-setup.json') as file:
         N_A = parameter['n_a']
         N_B = parameter['n_b']
         N_C = parameter['n_c']
-
-# Problem setup
-FILENAME = 'temperatures.npy'
-T_A = 15
-T_B = 10
-T_C = 25
-N_A = 5
-N_B = 3
-N_C = 7
 
 def fast_marching_cube(X, Y, Z, temperatures, t_value):
     dims = X.shape[0] - 1, X.shape[1] - 1, X.shape[2] - 1
@@ -133,8 +126,6 @@ def on_key(window, key, scancode, action, mods):
         controller.a = False
         controller.b = False
         controller.c = True
-    elif key == glfw.KEY_SPACE:
-        controller.fillPolygon = not controller.fillPolygon
     elif key == glfw.KEY_ESCAPE:
         glfw.set_window_should_close(window, True)
 
@@ -177,11 +168,9 @@ if __name__ == '__main__':
     # Connecting the callback function on_key to handle keyboard events
     glfw.set_key_callback(window, on_key)
 
-    # Assembling the shader program
+    # Assembling the shader programs
     pipeline = es.SimpleModelViewProjectionShaderProgram()
-
-    # Telling OpenGL to use our shader program
-    glUseProgram(pipeline.shaderProgram)
+    voxelsPipeline = es.SimpleModelViewProjectionShaderProgram2()
 
     # Setting up the clear screen color
     glClearColor(0.0, 0.0, 0.0, 1.0)
@@ -189,8 +178,9 @@ if __name__ == '__main__':
     # As we work in 3D, we need to check which part is in front, and which one is at the back
     glEnable(GL_DEPTH_TEST)
 
-    # Creating shapes on GPU memory
-    gpuAxis = es.toGPUShape(bs.createAxis(7))
+    # Enabling transparencies
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
     # Load temperatures and grid
     load_voxels = np.load(FILENAME)
@@ -342,7 +332,6 @@ if __name__ == '__main__':
 
         # Setting up the projection transform
         projection = tr.perspective(60, float(width) / float(height), 0.1, 100)
-        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, 'projection'), 1, GL_TRUE, projection)
 
         # Setting up the view transform
         camX = 20 * np.sin(camera_theta)
@@ -354,7 +343,9 @@ if __name__ == '__main__':
             np.array([0, 0, 0]),
             np.array([0, 0, 1])
         )
-        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, 'view'), 1, GL_TRUE, view)
+
+        # Setting up the model transform
+        model = tr.identity()
 
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -404,17 +395,11 @@ if __name__ == '__main__':
         else:
             rotation -= dt
 
-        # Drawing shapes with different model transformations
-        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, 'model'), 1, GL_TRUE, tr.identity())
-        pipeline.drawShape(gpuAxis, GL_LINES)
-
-        if controller.a:
-            sg.drawSceneGraphNode(scaledSurfaceA, pipeline, 'model')
-        elif controller.b:
-            sg.drawSceneGraphNode(scaledSurfaceB, pipeline, 'model')
-        elif controller.c:
-            sg.drawSceneGraphNode(scaledSurfaceC, pipeline, 'model')
-        sg.drawSceneGraphNode(scaledBorder, pipeline, 'model')
+        # Drawing fishes
+        glUseProgram(pipeline.shaderProgram)
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, 'projection'), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, 'view'), 1, GL_TRUE, view)
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, 'model'), 1, GL_TRUE, model)
 
         for fishA in fishesA:
             sg.drawSceneGraphNode(fishA, pipeline, 'model')
@@ -422,6 +407,20 @@ if __name__ == '__main__':
             sg.drawSceneGraphNode(fishB, pipeline, 'model')
         for fishC in fishesC:
             sg.drawSceneGraphNode(fishC, pipeline, 'model')
+        sg.drawSceneGraphNode(scaledBorder, pipeline, 'model')
+
+        # Drawing voxels
+        glUseProgram(voxelsPipeline.shaderProgram)
+        glUniformMatrix4fv(glGetUniformLocation(voxelsPipeline.shaderProgram, 'projection'), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(voxelsPipeline.shaderProgram, 'view'), 1, GL_TRUE, view)
+        glUniformMatrix4fv(glGetUniformLocation(voxelsPipeline.shaderProgram, 'model'), 1, GL_TRUE, model)
+
+        if controller.a:
+            sg.drawSceneGraphNode(scaledSurfaceA, voxelsPipeline, 'model')
+        elif controller.b:
+            sg.drawSceneGraphNode(scaledSurfaceB, voxelsPipeline, 'model')
+        elif controller.c:
+            sg.drawSceneGraphNode(scaledSurfaceC, voxelsPipeline, 'model')
 
         # Once the drawing is rendered, buffers are swapped so an uncomplete drawing is never seen
         glfw.swap_buffers(window)
