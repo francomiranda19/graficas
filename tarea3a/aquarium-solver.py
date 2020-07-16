@@ -7,8 +7,8 @@ from matplotlib import cm
 import scipy
 import scipy.sparse.linalg
 
+# Setup
 setup = sys.argv[1]
-
 with open(setup) as file:
     data = json.load(file)
     for parameter in data['parameters']:
