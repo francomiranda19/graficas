@@ -290,24 +290,34 @@ if __name__ == '__main__':
     nbs = []
     ncs = []
 
+    randomRotationA = []
+    randomRotationB = []
+    randomRotationC = []
+
     # We create random numbers for each zone
     # Each fish will be in that position
     for i in range(N_A):
         na = randint(0, len(pointsA) - 1)
+        ra = uniform(0, np.pi)
         fishesA.append(createFish(1.0, 0.0, 0.0))
         nas.append(na)
+        randomRotationA.append(ra)
         pointsA.pop(na)
     pointsA = copyPointsA
     for i in range(N_B):
         nb = randint(0, len(pointsB) - 1)
+        rb = uniform(0, np.pi)
         fishesB.append(createFish(0.0, 1.0, 0.0))
         nbs.append(nb)
+        randomRotationB.append(rb)
         pointsB.pop(nb)
     pointsB = copyPointsB
     for i in range(N_C):
         nc = randint(0, len(pointsC) - 1)
+        rc = uniform(0, np.pi)
         fishesC.append(createFish(0.0, 0.0, 1.0))
         ncs.append(nc)
+        randomRotationC.append(rc)
         pointsC.pop(nc)
     pointsC = copyPointsC
 
@@ -365,17 +375,23 @@ if __name__ == '__main__':
 
         # Fish transformations
         for i in range(len(fishesA)):
-            fishesA[i].transform = tr.matmul([tr.uniformScale(zoom), tr.translate(pointsA[nas[i]][1] - 20, pointsA[nas[i]][0] - 10, pointsA[nas[i]][2] - 10)])
+            fishesA[i].transform = tr.matmul([tr.uniformScale(zoom),
+                                              tr.translate(pointsA[nas[i]][1] - 20, pointsA[nas[i]][0] - 10, pointsA[nas[i]][2] - 10),
+                                              tr.rotationZ(randomRotationA[i])])
             tailRotationA = sg.findNode(fishesA[i], 'tailRotation')
             tailRotationA.transform = tr.rotationZ(rotation)
 
         for i in range(len(fishesB)):
-            fishesB[i].transform = tr.matmul([tr.uniformScale(zoom), tr.translate(pointsB[nbs[i]][1] - 20, pointsB[nbs[i]][0] - 10, pointsB[nbs[i]][2] - 10)])
+            fishesB[i].transform = tr.matmul([tr.uniformScale(zoom),
+                                              tr.translate(pointsB[nbs[i]][1] - 20, pointsB[nbs[i]][0] - 10, pointsB[nbs[i]][2] - 10),
+                                              tr.rotationZ(randomRotationB[i])])
             tailRotationB = sg.findNode(fishesB[i], 'tailRotation')
             tailRotationB.transform = tr.rotationZ(rotation)
 
         for i in range(len(fishesC)):
-            fishesC[i].transform = tr.matmul([tr.uniformScale(zoom), tr.translate(pointsC[ncs[i]][1] - 20, pointsC[ncs[i]][0] - 10, pointsC[ncs[i]][2] - 10)])
+            fishesC[i].transform = tr.matmul([tr.uniformScale(zoom),
+                                              tr.translate(pointsC[ncs[i]][1] - 20, pointsC[ncs[i]][0] - 10, pointsC[ncs[i]][2] - 10),
+                                              tr.rotationZ(randomRotationC[i])])
             tailRotationC = sg.findNode(fishesC[i], 'tailRotation')
             tailRotationC.transform = tr.rotationZ(rotation)
 
