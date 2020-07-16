@@ -11,18 +11,18 @@ import scipy.sparse.linalg
 setup = sys.argv[1]
 with open(setup) as file:
     data = json.load(file)
-    for parameter in data['parameters']:
+    for line in data:
         # Problem setup
-        H = parameter['height']
-        W = parameter['width']
-        L = parameter['length']
+        H = data['height']
+        W = data['width']
+        L = data['length']
         # Boundary conditions
-        WINDOW_LOSS = parameter['window_loss']
-        HEATER_A = parameter['heater_a']
-        HEATER_B = parameter['heater_b']
-        AMBIENT_TEMPERATURE = parameter['ambient_temperature']
+        WINDOW_LOSS = data['window_loss']
+        HEATER_A = data['heater_a']
+        HEATER_B = data['heater_b']
+        AMBIENT_TEMPERATURE = data['ambient_temperature']
         # Solution
-        FILENAME = parameter['filename']
+        FILENAME = data['filename']
 
 # Discretization step
 h = 0.15
