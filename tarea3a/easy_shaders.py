@@ -386,6 +386,63 @@ class SimpleModelViewProjectionShaderProgram:
         glDrawElements(mode, shape.size, GL_UNSIGNED_INT, None)
 
 
+class SimpleModelViewProjectionShaderProgram2:
+
+    def __init__(self):
+        vertex_shader = """
+            #version 130
+
+            uniform mat4 projection;
+            uniform mat4 view;
+            uniform mat4 model;
+
+            in vec3 position;
+            in vec3 color;
+
+            out vec3 newColor;
+            void main()
+            {
+                gl_Position = projection * view * model * vec4(position, 1.0f);
+                newColor = color;
+            }
+            """
+
+        fragment_shader = """
+            #version 130
+            in vec3 newColor;
+
+            out vec4 outColor;
+            void main()
+            {
+                outColor = vec4(newColor, 0.4f);
+            }
+            """
+
+        self.shaderProgram = OpenGL.GL.shaders.compileProgram(
+            OpenGL.GL.shaders.compileShader(vertex_shader, OpenGL.GL.GL_VERTEX_SHADER),
+            OpenGL.GL.shaders.compileShader(fragment_shader, OpenGL.GL.GL_FRAGMENT_SHADER))
+
+    def drawShape(self, shape, mode=GL_TRIANGLES):
+        assert isinstance(shape, GPUShape)
+
+        # Binding the proper buffers
+        glBindVertexArray(shape.vao)
+        glBindBuffer(GL_ARRAY_BUFFER, shape.vbo)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shape.ebo)
+
+        # 3d vertices + rgb color specification => 3*4 + 3*4 = 24 bytes
+        position = glGetAttribLocation(self.shaderProgram, "position")
+        glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
+        glEnableVertexAttribArray(position)
+
+        color = glGetAttribLocation(self.shaderProgram, "color")
+        glVertexAttribPointer(color, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
+        glEnableVertexAttribArray(color)
+
+        # Render the active element buffer with the active shader program
+        glDrawElements(mode, shape.size, GL_UNSIGNED_INT, None)
+
+
 class SimpleTextureModelViewProjectionShaderProgram:
 
     def __init__(self):
